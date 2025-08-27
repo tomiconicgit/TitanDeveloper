@@ -1,20 +1,28 @@
 /* Core Styling & Variable Refresh */
 :root {
-    --bg-main: #121212;
-    --bg-container: #1E1E1E;
-    --bg-header: #282828;
+    --bg-main: #1C1C1C;
+    --bg-container: #282828;
+    --bg-header: #333333;
     --text-primary: #F0F0F0;
     --text-secondary: #A0A0A0;
-    --accent: #00A389; /* Muted teal */
-    --accent-dark: #007767;
-    --accent-gradient: linear-gradient(135deg, #00A389, #00C7AF);
-    --border-color: #333333;
+    --accent: #50FA7B; /* Muted Green */
+    --accent-dark: #3EBC66;
+    --accent-gradient: linear-gradient(135deg, #50FA7B, #50C878);
+    --border-color: #3C3C3C;
+
+    /* New Syntax Highlighting Colors based on provided images */
     --syntax-comment: #6A9955;
     --syntax-keyword: #569CD6;
     --syntax-string: #CE9178;
     --syntax-tag: #56B3A9;
     --syntax-attribute: #9CDCFE;
     --syntax-plain: #D4D4D4;
+    --syntax-function: #DCDCAA; /* Yellowish for function names */
+    --syntax-class: #4EC9B0; /* Light teal for class/type names */
+    --syntax-constant: #B8D7A3; /* Light green for constants */
+    --syntax-number: #B5CEA8;
+    --syntax-boolean: #569CD6;
+    --syntax-operator: #D4D4D4;
 }
 
 * {
@@ -683,21 +691,22 @@ body {
 /* Syntax Highlighting Colors */
 .token-tags { color: var(--syntax-tag); }
 .token-keywords { color: var(--syntax-keyword); }
-.token-types { color: var(--syntax-keyword); }
-.token-attributes { color: var(--syntax-attribute); }
 .token-strings { color: var(--syntax-string); }
 .token-comments { color: var(--syntax-comment); }
 .token-properties { color: var(--text-primary); }
 .token-values { color: var(--syntax-string); }
 .token-selectors { color: var(--syntax-keyword); }
-.token-numbers { color: #B5CEA8; }
-.token-booleans { color: #569CD6; }
+.token-numbers { color: var(--syntax-number); }
+.token-booleans { color: var(--syntax-boolean); }
 .token-headings { color: #9433D3; }
 .token-bold { font-weight: bold; }
 .token-italic { font-style: italic; }
 .token-links { color: var(--accent); }
 .token-variables { color: #CDA869; }
 .token-doctype { color: #569CD6; }
+.token-function { color: var(--syntax-function); }
+.token-class { color: var(--syntax-class); }
+.token-constant { color: var(--syntax-constant); }
 
 /* Dropdown Menu */
 .dropdown-menu {
