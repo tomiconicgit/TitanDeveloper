@@ -1,4 +1,6 @@
-/* File: /styles.css */
+/*
+File: /styles.css
+*/
 
 /* Core Styling & Variable Refresh */
 :root {
@@ -349,16 +351,75 @@ body {
     overflow-y: auto;
 }
 
+/* Syntax Highlighting Colors */
+.token-tags { color: var(--syntax-tag); }
+.token-keywords { color: var(--syntax-keyword); }
+.token-strings { color: var(--syntax-string); }
+.token-comments { color: var(--syntax-comment); }
+.token-properties { color: var(--syntax-attribute); }
+.token-values { color: var(--syntax-string); }
+.token-selectors { color: var(--syntax-keyword); }
+.token-numbers { color: var(--syntax-number); }
+.token-booleans { color: var(--syntax-boolean); }
+.token-headings { color: #9433D3; }
+.token-bold { font-weight: bold; }
+.token-italic { font-style: italic; }
+.token-links { color: var(--accent); }
+.token-variables { color: #CDA869; }
+.token-doctype { color: #569CD6; }
+.token-functions { color: var(--syntax-function); }
+.token-classes { color: var(--syntax-class); }
+.token-constants { color: var(--syntax-constant); }
+.token-attributes { color: #9CDCFE; }
+
 /* Modal */
 .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s 0.3s;
+    z-index: 2000;
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
     transition: opacity 0.3s ease;
 }
 
 .modal-content {
     background-color: var(--bg-container);
+    width: 100%;
+    max-width: 600px;
     border-radius: 16px 16px 0 0;
     padding: 1.5rem;
+    box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.4);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1.2);
+}
+
+.modal.show .modal-content {
+    transform: translateY(0);
+}
+
+#options-container, #input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 0.5rem 0;
 }
 
 #options-container button,
@@ -367,12 +428,30 @@ body {
     padding: 1rem;
     font-size: 1rem;
     border-radius: 12px;
+    border: none;
+    font-family: inherit;
 }
 
 #options-container button {
     background-color: var(--bg-main);
     color: var(--text-primary);
+    text-align: left;
     transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+}
+
+#options-container button svg {
+    width: 24px;
+    height: 24px;
+    color: var(--accent);
+}
+
+#options-container button:active {
+    background-color: var(--border-color);
+    transform: scale(0.98);
 }
 
 #options-container button:hover {
@@ -383,6 +462,8 @@ body {
     background-color: var(--bg-main);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
+    outline: none;
+    transition: border-color 0.2s ease;
 }
 
 #input-section input:focus {
@@ -390,8 +471,25 @@ body {
     box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
 }
 
+.button-group {
+    display: flex;
+    gap: 1rem;
+}
+
 .button-group button {
+    flex: 1;
+    cursor: pointer;
+    font-weight: 600;
     transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.button-group button:active {
+    transform: scale(0.98);
+}
+
+#confirm-btn {
+    background-color: var(--border-color);
+    color: var(--text-secondary);
 }
 
 #confirm-btn.enabled {
@@ -399,8 +497,22 @@ body {
     color: var(--bg-main);
 }
 
+#confirm-btn.enabled:active {
+    background: var(--accent-dark);
+}
+
 #confirm-btn.enabled:hover {
     background: var(--accent-dark);
+}
+
+#cancel-btn {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+#cancel-btn:active {
+    background-color: var(--border-color);
 }
 
 /* Dropdown Menu */
