@@ -5,7 +5,7 @@ File: /db.js
 // A simple IndexedDB wrapper for persistent storage.
 
 const DB_NAME = 'TitanDeveloperDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORES = {
     files: 'files',
     repositories: 'repositories'
@@ -22,10 +22,12 @@ async function initDB() {
             if (!db.objectStoreNames.contains(STORES.files)) {
                 const fileStore = db.createObjectStore(STORES.files, { keyPath: 'id', autoIncrement: true });
                 fileStore.createIndex('timestamp', 'timestamp', { unique: false });
-                fileStore.createIndex('repositoryId', 'repositoryId', { unique: false }); // New index for repository
+                fileStore.createIndex('repositoryId', 'repositoryId', { unique: false });
+                fileStore.createIndex('parentId', 'parentId', { unique: false });
             }
             if (!db.objectStoreNames.contains(STORES.repositories)) {
-                db.createObjectStore(STORES.repositories, { keyPath: 'id', autoIncrement: true });
+                const repoStore = db.createObjectStore(STORES.repositories, { keyPath: 'id', autoIncrement: true });
+                repoStore.createIndex('timestamp', 'timestamp', { unique: false });
             }
         };
 
