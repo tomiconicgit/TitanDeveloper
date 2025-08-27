@@ -364,6 +364,13 @@ main {
 }
 
 /* AI Interface */
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding-bottom: 0;
+}
+
 .gemini-interface-container {
     display: flex;
     flex-direction: column;
