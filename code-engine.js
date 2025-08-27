@@ -22,7 +22,9 @@
         },
         js: {
             keywords: /\b(let|const|var|function|class|return|if|else|for|while|do|import|export|from|async|await|new|this|try|catch|finally|throw|switch|case|break)\b/g,
-            types: /\b(String|Number|Boolean|Array|Object|Promise|Symbol|Map|Set|RegExp|Error)\b/g,
+            functions: /(\b\w+)\s*(?=\()/g,
+            classes: /\b(String|Number|Boolean|Array|Object|Promise|Symbol|Map|Set|RegExp|Error)\b/g,
+            constants: /(\b[A-Z_]+)\b/g,
             strings: /("|`)(?:\\.|[^"\\])*(")/g,
             comments: /(\/\/.*|\/\*[\s\S]*?\*\/)/g,
         },
@@ -41,6 +43,7 @@
         ts: {
             keywords: /\b(let|const|var|function|class|return|if|else|for|while|do|import|export|from|async|await|new|this|try|catch|finally|throw|switch|case|break|interface|type|public|private|protected)\b/g,
             types: /\b(string|number|boolean|any|void|never|unknown)\b/g,
+            functions: /(\b\w+)\s*(?=\()/g,
             strings: /("|`)(?:\\.|[^"\\])*(")/g,
             comments: /(\/\/.*|\/\*[\s\S]*?\*\/)/g,
         },
