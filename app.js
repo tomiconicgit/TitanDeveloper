@@ -2,18 +2,17 @@
 File: /app.js
 */
 
-// Orchestrates the application, handling UI rendering, user interactions, and navigation.
-
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log("App initialized");
     try {
         await window.db.ready;
+        console.log("DB ready");
     } catch (e) {
         console.error("Failed to initialize database:", e);
-        document.getElementById('app-container').innerHTML = '<div class="error-state"><h1>Failed to Load App</h1><p>Please check your connection and try again.</p></div>';
-        return;
+        window.logCustomError("Database initialization failed", e);
+        document.getElementById('app-container').innerHTML = '<div class="error-display"><h1>Database Error</h1><p>Could not connect to storage. Please refresh and try again.</p></div>';
     }
 
-    // --- Core UI & State Management ---
     const appContainer = document.getElementById('app-container');
     const modal = document.getElementById('modal');
     const optionsContainer = document.getElementById('options-container');
@@ -40,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (this.history[this.history.length - 1].page !== pageName) {
                 this.history.push({ page: pageName, data });
             }
+            console.log("Rendering page:", pageName);
             renderPage(pageName, data);
         },
         pop() {
@@ -49,13 +49,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 renderPage(lastPage.page, lastPage.data);
             }
         },
-        reset() {
-            this.history = [{ page: 'home', data: {} }];
-            renderPage('home');
-        },
     };
 
-    // --- Event Listeners ---
+    document.addEventListener('app-error', (e) => {
+        console.warn('App-level error:', e.detail);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-display';
+        errorDiv.innerHTML = `<h3>Error</h3><p>${e.detail.message}</p>`;
+        appContainer.prepend(errorDiv);
+        setTimeout(() => errorDiv.remove(), 5000);
+    });
+
     cancelBtn.addEventListener('click', () => hideModal());
     modal.addEventListener('click', (e) => {
         if (e.target === modal || e.target.id === 'cancel-btn') hideModal();
@@ -114,11 +118,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
             console.error("Error creating/updating item:", e);
             window.logCustomError("Failed to create/update item", e);
-            alert("An error occurred. Please try again.");
         }
     });
 
-    // --- UI Rendering Functions ---
     async function renderPage(pageName, data = {}) {
         state.currentPage = pageName;
         state.currentRepoId = pageName === 'repo-tree' && data.repo ? data.repo.id : null;
@@ -137,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 renderRepoTreePage(data);
                 break;
             default:
-                appContainer.innerHTML = '<div class="error-state"><h1>Page Not Found</h1><p>The page you requested does not exist.</p></div>';
+                appContainer.innerHTML = '<div class="error-display"><h1>Page Not Found</h1><p>The page you requested does not exist.</p></div>';
         }
     }
 
@@ -185,12 +187,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('new-item-button').addEventListener('click', () => showModal('options'));
 
         updateNavPill();
-        renderMainContent();
+        await renderMainContent();
     }
 
     async function renderMainContent() {
         const mainContent = document.getElementById('main-content');
-        if (!mainContent) return;
+        if (!mainContent) {
+            console.error("Main content container not found");
+            return;
+        }
 
         if (state.currentView === 'files') {
             const files = await window.db.getAllItems('files');
@@ -415,8 +420,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }, { once: true });
                     }
                 } catch (e) {
-                    alert('An error occurred.');
-                    console.error(e);
+                    window.logCustomError("Action failed", e);
                 }
                 menu.remove();
             });
@@ -467,13 +471,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const lineNumbers = document.querySelector('.line-numbers');
         const highlighter = document.querySelector('.syntax-highlighting-layer');
 
-        let codeContent = file.content || '';
-        editor.value = codeContent;
+        editor.value = file.content || '';
 
         const updateLineNumbers = () => {
             const lines = editor.value.split('\n');
-            const lineCount = lines.length;
-            lineNumbers.innerHTML = Array.from({ length: lineCount }, (_, i) => `<div>${i + 1}</div>`).join('');
+            lineNumbers.innerHTML = Array.from({ length: lines.length }, (_, i) => `<div>${i + 1}</div>`).join('');
         };
 
         const updateSyntaxHighlighting = () => {
@@ -520,14 +522,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        const resizeEditor = () => {
-            editor.style.width = `${window.innerWidth - 70}px`;
-            highlighter.style.width = `${window.innerWidth - 70}px`;
-            updateEditor();
-        };
-
-        window.addEventListener('resize', resizeEditor);
-        resizeEditor();
+        window.addEventListener('resize', updateEditor);
+        updateEditor();
 
         let saveTimeout = null;
         editor.addEventListener('input', () => {
@@ -575,8 +571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 break;
                         }
                     } catch (e) {
-                        alert('An error occurred.');
-                        console.error(e);
+                        window.logCustomError("Editor action failed", e);
                     }
                     menu.remove();
                 });
@@ -603,19 +598,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 filenameTitle.textContent = options.type === 'rename' ? 'Rename' : `New ${options.type.charAt(0).toUpperCase() + options.type.slice(1)}`;
                 filenameInput.placeholder = options.type === 'file' ? 'e.g., index.html' : options.type === 'folder' ? 'e.g., src' : 'e.g., my-project';
                 filenameInput.value = options.currentName || '';
+                filenameInput.disabled = false;
+                filenameInput.focus();
                 state.currentRepoId = options.repoId || null;
                 state.currentParentId = options.parentId || null;
                 if (options.type === 'rename') {
                     confirmBtn.onclick = async () => {
                         const newName = filenameInput.value.trim();
                         if (!newName) return;
-                        await window.db.updateItem(options.store, options.itemId, { name: newName });
-                        hideModal();
-                        if (state.currentPage === 'repo-tree') {
-                            const repo = await window.db.getItemById('repositories', state.currentRepoId);
-                            viewManager.push('repo-tree', { repo });
-                        } else {
-                            renderMainContent();
+                        try {
+                            await window.db.updateItem(options.store, options.itemId, { name: newName });
+                            hideModal();
+                            if (state.currentPage === 'repo-tree') {
+                                const repo = await window.db.getItemById('repositories', state.currentRepoId);
+                                viewManager.push('repo-tree', { repo });
+                            } else {
+                                renderMainContent();
+                            }
+                        } catch (e) {
+                            window.logCustomError("Rename failed", e);
                         }
                     };
                 } else {
@@ -637,4 +638,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             confirmBtn.disabled = true;
         }, 300);
     }
+
+    // Force initial render
+    viewManager.push('home');
 });
