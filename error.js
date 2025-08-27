@@ -72,7 +72,6 @@ File: /error.js
     };
 
     init();
-
 })();
 
 window.logCustomError = (message, details) => {
@@ -82,11 +81,9 @@ window.logCustomError = (message, details) => {
         } catch (e) {
             const stack = e.stack || 'N/A';
             const cause = (details && details.cause) ? details.cause : 'N/A';
-            // Passing 'N/A' for source, lineno, and colno as we don't have them for custom errors
             const source = (details && details.source) ? details.source : 'N/A';
             const lineno = (details && details.lineno) ? details.lineno : 'N/A';
             const colno = (details && details.colno) ? details.colno : 'N/A';
-            // Use the logError function to dispatch the error event
             logError(e, 'Custom', message, source, lineno, colno, stack);
         }
     })();
