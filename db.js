@@ -14,7 +14,8 @@ async function initDB() {
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(STORES.files)) {
-                db.createObjectStore(STORES.files, { keyPath: 'id', autoIncrement: true });
+                const fileStore = db.createObjectStore(STORES.files, { keyPath: 'id', autoIncrement: true });
+                fileStore.createIndex('timestamp', 'timestamp', { unique: false });
             }
             if (!db.objectStoreNames.contains(STORES.repositories)) {
                 db.createObjectStore(STORES.repositories, { keyPath: 'id', autoIncrement: true });
@@ -38,7 +39,18 @@ async function addItem(storeName, item) {
     const tx = dbInstance.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
     return new Promise((resolve, reject) => {
-        const request = store.add(item);
+        const request = store.add({ ...item, timestamp: Date.now() });
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function getItemById(storeName, id) {
+    if (!dbInstance) await initDB();
+    const tx = dbInstance.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    return new Promise((resolve, reject) => {
+        const request = store.get(id);
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
@@ -55,9 +67,27 @@ async function getAllItems(storeName) {
     });
 }
 
+async function updateItem(storeName, id, updates) {
+    if (!dbInstance) await initDB();
+    const tx = dbInstance.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    const item = await getItemById(storeName, id);
+    if (!item) {
+        throw new Error('Item not found');
+    }
+    const updatedItem = { ...item, ...updates, timestamp: Date.now() };
+    return new Promise((resolve, reject) => {
+        const request = store.put(updatedItem);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
 window.db = {
     addItem,
     getAllItems,
+    getItemById,
+    updateItem,
 };
 
 window.db.ready = initDB();
