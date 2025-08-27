@@ -31,14 +31,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const state = {
         currentPage: 'home',
         currentView: 'files',
+        currentRepoId: null, // Track current repository ID
     };
 
     // View Manager for handling page transitions and state
     const viewManager = {
-        history: ['home'],
+        history: [{ page: 'home', data: {} }],
         push(pageName, data = {}) {
-            if (this.history[this.history.length - 1] !== pageName) {
-                this.history.push(pageName);
+            if (this.history[this.history.length - 1].page !== pageName) {
+                this.history.push({ page: pageName, data });
             }
             renderPage(pageName, data);
         },
@@ -46,11 +47,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (this.history.length > 1) {
                 this.history.pop();
                 const lastPage = this.history[this.history.length - 1];
-                renderPage(lastPage);
+                renderPage(lastPage.page, lastPage.data);
             }
         },
         reset() {
-            this.history = ['home'];
+            this.history = [{ page: 'home', data: {} }];
             renderPage('home');
         },
     };
@@ -65,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     newFileBtn.addEventListener('click', () => {
-        showModal('input', { type: 'file' });
+        showModal('input', { type: 'file', repoId: state.currentRepoId });
         filenameInput.disabled = false;
         filenameInput.focus();
     });
@@ -100,10 +101,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const name = filenameInput.value.trim();
         if (name === '') return;
 
-        const store = filenameTitle.textContent === 'New File' ? 'files' : 'repositories';
+        const type = filenameTitle.textContent === 'New File' ? 'file' : 'repo';
+        const store = type === 'file' ? 'files' : 'repositories';
         const newItem = { name, content: '' };
-        if (store === 'files' && options.repoId) {
-            newItem.repositoryId = options.repoId;
+        if (type === 'file' && state.currentRepoId) {
+            newItem.repositoryId = state.currentRepoId;
         }
 
         try {
@@ -112,7 +114,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             hideModal();
             if (store === 'files') {
                 const createdFile = await window.db.getItemById('files', newItemId);
-                viewManager.push('editor', { file: createdFile });
+                if (state.currentRepoId) {
+                    // Refresh repo tree view
+                    const repo = await window.db.getItemById('repositories', state.currentRepoId);
+                    viewManager.push('repo-tree', { repo });
+                } else {
+                    viewManager.push('editor', { file: createdFile });
+                }
             } else {
                 renderMainContent();
             }
@@ -134,6 +142,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- UI Rendering Functions ---
     async function renderPage(pageName, data = {}) {
         state.currentPage = pageName;
+        if (pageName === 'repo-tree' && data.repo) {
+            state.currentRepoId = data.repo.id;
+        } else if (pageName !== 'repo-tree') {
+            state.currentRepoId = null;
+        }
         appContainer.innerHTML = '';
         hideModal();
 
@@ -544,6 +557,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else if (options.type === 'repo') {
                     filenameTitle.textContent = 'New Repository';
                     filenameInput.placeholder = 'e.g., my-pwa-project';
+                }
+                // Store repoId in state for use in confirmBtn
+                if (options.repoId) {
+                    state.currentRepoId = options.repoId;
                 }
             }
         }, 10);
