@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Titan IDE</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <div id="app-container"></div>
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <div id="options-container" class="hidden">
+                <button id="create-new-file-btn">Create New File</button>
+                <div class="divider"></div>
+                <button id="new-repo-btn">New Repository</button>
+            </div>
+            <div id="input-section" class="hidden">
+                <input type="text" id="filename" placeholder="Enter name" disabled>
+                <div class="button-group">
+                    <button id="confirm-btn" disabled>Confirm</button>
+                    <button id="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

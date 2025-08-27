@@ -1,0 +1,63 @@
+/* Styles for the new Gemini UI elements */
+.gemini-interface {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-container);
+    border-top: 1px solid var(--border-color);
+    position: sticky; /* Make the input bar stick to the bottom */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999;
+}
+
+#gemini-prompt-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.75rem;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text-primary);
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    resize: none; /* Prevents manual resizing of the text area */
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+#gemini-prompt-input:focus {
+    border-color: var(--accent);
+}
+
+#gemini-prompt-input::placeholder {
+    color: var(--text-secondary);
+}
+
+#gemini-send-btn {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--bg-container);
+    background-color: var(--accent);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+#gemini-send-btn:hover:not(:disabled) {
+    background-color: #5A99D6;
+}
+
+#gemini-send-btn:active:not(:disabled) {
+    background-color: #3A79B6;
+}
+
+#gemini-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
