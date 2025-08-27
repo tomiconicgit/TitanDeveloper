@@ -1,14 +1,16 @@
 /* Core Styling & Variable Refresh */
 :root {
-    --bg-main: #1C1C1C;
-    --bg-container: #282828;
-    --bg-header: #333333;
+    --bg-main: #0C0C0C; /* Very dark background for main body */
+    --bg-container: #1A1A1A; /* Darker, slightly offset for floating containers */
+    --bg-header: #282828; /* Slightly lighter for headers to provide contrast */
     --text-primary: #F0F0F0;
     --text-secondary: #A0A0A0;
     --accent: #50FA7B; /* Muted Green */
     --accent-dark: #3EBC66;
     --accent-gradient: linear-gradient(135deg, #50FA7B, #50C878);
     --border-color: #3C3C3C;
+    --shadow-light: rgba(0, 0, 0, 0.4);
+    --shadow-dark: rgba(0, 0, 0, 0.8);
 
     /* New Syntax Highlighting Colors based on provided images */
     --syntax-comment: #6A9955;
@@ -17,12 +19,26 @@
     --syntax-tag: #56B3A9;
     --syntax-attribute: #9CDCFE;
     --syntax-plain: #D4D4D4;
-    --syntax-function: #DCDCAA; /* Yellowish for function names */
-    --syntax-class: #4EC9B0; /* Light teal for class/type names */
-    --syntax-constant: #B8D7A3; /* Light green for constants */
+    --syntax-function: #DCDCAA;
+    --syntax-class: #4EC9B0;
+    --syntax-constant: #B8D7A3;
     --syntax-number: #B5CEA8;
     --syntax-boolean: #569CD6;
     --syntax-operator: #D4D4D4;
+
+    /* File Type Colors for Icons */
+    --file-color-html: #E34F26;
+    --file-color-css: #1572B6;
+    --file-color-js: #F7DF1E;
+    --file-color-json: #A4B4CC;
+    --file-color-yaml: #FFD25F;
+    --file-color-md: #0861C5;
+    --file-color-ts: #3178C6;
+    --file-color-jsx: #61DAFB;
+    --file-color-vue: #42B883;
+    --file-color-scss: #C6538C;
+    --file-color-svg: #FFB13B;
+    --file-color-default: #A0A0A0;
 }
 
 * {
@@ -40,40 +56,51 @@ html, body {
 body {
     background-color: var(--bg-main);
     color: var(--text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    overflow: hidden; /* Prevent body scrolling */
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
 }
 
 #app-container {
+    padding: 1.5rem;
     padding-bottom: 7rem;
     height: 100vh;
-    overflow: hidden;
+    overflow-y: auto;
     position: relative;
-    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
 }
 
-.page-content {
+.floating-container {
+    background-color: var(--bg-container);
+    border-radius: 24px;
+    box-shadow: 0 8px 30px var(--shadow-dark);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    width: 100%;
     height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 1.5rem;
-}
-.page-home .page-content {
     overflow: hidden;
-    padding-top: 2rem;
-}
-.page-ai .page-content {
     display: flex;
     flex-direction: column;
 }
-.page-editor .page-content {
-    padding: 0;
+
+.fullscreen-container {
+    position: fixed;
+    top: 1.5rem;
+    left: 1.5rem;
+    right: 1.5rem;
+    bottom: 8.5rem;
+}
+
+.page-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .center-content {
     text-align: center;
-    display: flex;
-    flex-direction: column;
     justify-content: center;
 }
 
@@ -87,14 +114,18 @@ body {
 .error-state h1 { color: var(--accent); }
 
 /* Home Screen */
+.page-home .floating-container {
+    display: flex;
+    flex-direction: column;
+}
+
 .logo {
     text-align: center;
-    padding: 0;
-    margin-bottom: 4rem;
+    padding: 1rem 0 3rem;
 }
 
 .titan {
-    font-size: 3.5rem;
+    font-size: 4rem;
     font-weight: 800;
     line-height: 1.1;
     margin: 0;
@@ -109,22 +140,22 @@ body {
     font-weight: 300;
 }
 
-.recent-projects-header {
+.section-title-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
-    padding: 0 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
 }
 
-.recent-projects-header h2 {
+.section-title-container h2 {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
 }
 
-.recent-projects-header a {
+.section-title-container a {
     color: var(--accent);
     text-decoration: none;
     font-size: 1rem;
@@ -135,11 +166,11 @@ body {
 .recent-projects-scroll-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0 1.5rem 1.5rem;
-    scrollbar-width: none; /* For Firefox */
+    padding: 0 0.5rem 1.5rem;
+    scrollbar-width: none;
 }
 .recent-projects-scroll-container::-webkit-scrollbar {
-    display: none; /* For Chrome, Safari, and Opera */
+    display: none;
 }
 
 .recent-projects-grid {
@@ -148,8 +179,8 @@ body {
 }
 
 .project-card {
-    min-width: 160px;
-    background-color: var(--bg-container);
+    min-width: 180px;
+    background-color: var(--bg-header);
     border-radius: 18px;
     padding: 1.5rem 1rem;
     display: flex;
@@ -165,21 +196,41 @@ body {
 }
 
 .project-icon {
-    width: 56px;
-    height: 56px;
-    background: var(--accent-gradient);
-    border-radius: 50%;
+    width: 64px;
+    height: 64px;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-bottom: 0.75rem;
 }
 
-.project-icon svg {
-    width: 28px;
-    height: 28px;
+.project-icon-bg {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    font-size: 1.2rem;
     color: var(--bg-main);
+    text-transform: uppercase;
 }
+
+.project-icon-bg.html { background-color: var(--file-color-html); }
+.project-icon-bg.css { background-color: var(--file-color-css); }
+.project-icon-bg.js { background-color: var(--file-color-js); }
+.project-icon-bg.json { background-color: var(--file-color-json); }
+.project-icon-bg.yaml { background-color: var(--file-color-yaml); }
+.project-icon-bg.md { background-color: var(--file-color-md); }
+.project-icon-bg.ts { background-color: var(--file-color-ts); }
+.project-icon-bg.jsx { background-color: var(--file-color-jsx); }
+.project-icon-bg.vue { background-color: var(--file-color-vue); }
+.project-icon-bg.scss { background-color: var(--file-color-scss); }
+.project-icon-bg.svg { background-color: var(--file-color-svg); }
+.project-icon-bg.default { background-color: var(--file-color-default); }
+
 
 .project-title {
     font-weight: 600;
@@ -204,15 +255,17 @@ body {
 /* Command Bar */
 .command-bar {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    right: 1.5rem;
     background-color: var(--bg-container);
+    border-radius: 24px;
+    padding: 0.75rem 0;
     display: flex;
     justify-content: space-around;
-    padding: 1rem 0;
-    border-top: 1px solid var(--border-color);
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 30px var(--shadow-dark);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
     z-index: 1000;
 }
 
@@ -316,6 +369,7 @@ body {
     font-size: 1.1rem;
     border-radius: 14px;
     border: none;
+    font-family: inherit;
 }
 
 #options-container button {
@@ -323,6 +377,15 @@ body {
     color: var(--text-primary);
     text-align: left;
     transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#options-container button svg {
+    width: 24px;
+    height: 24px;
+    color: var(--accent);
 }
 
 #options-container button:active {
@@ -383,18 +446,15 @@ body {
 }
 
 /* Page Headers & Sticky Content */
-.sticky-header {
-    position: sticky;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background-color: var(--bg-main);
+.page-header {
+    background-color: var(--bg-container);
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
     z-index: 100;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
 }
 
 .header-buttons {
@@ -427,6 +487,10 @@ body {
 }
 
 /* File Explorer */
+.file-explorer-page {
+    padding: 0;
+}
+
 .file-list {
     flex-grow: 1;
     overflow-y: auto;
@@ -438,7 +502,7 @@ body {
     align-items: center;
     padding: 1rem 1.5rem;
     margin-bottom: 1rem;
-    background-color: var(--bg-container);
+    background-color: var(--bg-header);
     border-radius: 12px;
     text-decoration: none;
     color: var(--text-primary);
@@ -450,34 +514,42 @@ body {
     background-color: var(--border-color);
 }
 
-.file-icon {
+.file-icon-container {
     width: 44px;
     height: 44px;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 10px;
     margin-right: 1.25rem;
-    color: var(--bg-main);
 }
 
-.file-icon svg {
+.file-icon-bg {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.file-icon-bg.html { background-color: var(--file-color-html); }
+.file-icon-bg.css { background-color: var(--file-color-css); }
+.file-icon-bg.js { background-color: var(--file-color-js); }
+.file-icon-bg.json { background-color: var(--file-color-json); }
+.file-icon-bg.yaml { background-color: var(--file-color-yaml); }
+.file-icon-bg.md { background-color: var(--file-color-md); }
+.file-icon-bg.ts { background-color: var(--file-color-ts); }
+.file-icon-bg.jsx { background-color: var(--file-color-jsx); }
+.file-icon-bg.vue { background-color: var(--file-color-vue); }
+.file-icon-bg.scss { background-color: var(--file-color-scss); }
+.file-icon-bg.svg { background-color: var(--file-color-svg); }
+.file-icon-bg.default { background-color: var(--file-color-default); }
+
+.file-icon-bg svg {
     width: 22px;
     height: 22px;
-    color: var(--text-primary);
+    color: var(--bg-main);
 }
-.file-icon.html svg { color: #E34F26; }
-.file-icon.css svg { color: #1572B6; }
-.file-icon.js svg { color: #F7DF1E; }
-.file-icon.json svg { color: #A4B4CC; }
-.file-icon.yaml svg { color: #FFD25F; }
-.file-icon.md svg { color: #0861C5; }
-.file-icon.ts svg { color: #3178C6; }
-.file-icon.jsx svg { color: #61DAFB; }
-.file-icon.vue svg { color: #42B883; }
-.file-icon.scss svg { color: #C6538C; }
-.file-icon.svg svg { color: #FFB13B; }
-.file-icon.default svg { color: var(--text-secondary); }
 
 .file-info {
     display: flex;
@@ -501,20 +573,11 @@ body {
 }
 
 /* AI Interface */
-.ai-header {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
-    background-color: var(--bg-main);
-    z-index: 100;
+.ai-page {
+    padding: 0;
 }
-
-.ai-header h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0;
-    text-align: center;
+.ai-page .page-content {
+    justify-content: space-between;
 }
 
 .chat-history {
@@ -542,7 +605,7 @@ body {
 }
 
 .titan-ai-message {
-    background-color: var(--bg-container);
+    background-color: var(--bg-header);
     color: var(--text-primary);
     align-self: flex-start;
     border: 1px solid var(--border-color);
@@ -577,12 +640,9 @@ body {
     align-items: center;
     gap: 0.75rem;
     padding: 1rem 1.5rem;
-    background-color: var(--bg-main);
+    background-color: var(--bg-container);
     border-top: 1px solid var(--border-color);
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    z-index: 10;
+    flex-shrink: 0;
 }
 
 #titan-ai-prompt-input {
@@ -593,7 +653,7 @@ body {
     font-family: inherit;
     font-size: 1rem;
     color: var(--text-primary);
-    background-color: var(--bg-container);
+    background-color: var(--bg-main);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     resize: none;
@@ -626,18 +686,49 @@ body {
     height: 28px;
 }
 
-/* Code Editor */
-.code-editor-page {
+/* Settings Page */
+.settings-page {
+    padding: 0;
+}
+.settings-list {
+    flex-grow: 1;
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    gap: 1rem;
+}
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-header);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+.setting-item span {
+    font-size: 1.1rem;
+}
+.settings-action-btn {
+    background: var(--accent-gradient);
+    border: none;
+    color: var(--bg-main);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Code Editor */
+.code-editor-page {
+    padding: 0;
 }
 .code-editor-container {
     display: flex;
     position: relative;
     flex-grow: 1;
     overflow: auto;
-    font-family: 'Cascadia Mono', 'Consolas', 'Menlo', monospace;
+    font-family: 'Roboto Mono', monospace;
     font-size: 1rem;
     line-height: 1.5;
     padding: 1rem 0;
@@ -650,8 +741,9 @@ body {
     user-select: none;
     position: sticky;
     left: 0;
-    background-color: var(--bg-main);
+    background-color: var(--bg-container);
     padding-left: 1.5rem;
+    z-index: 5;
 }
 #code-editor {
     flex-grow: 1;
@@ -663,9 +755,8 @@ body {
     line-height: inherit;
     outline: none;
     resize: none;
-    white-space: pre-wrap;
-    overflow-y: hidden;
-    overflow-x: auto;
+    white-space: pre;
+    overflow: auto;
     width: 100%;
     padding-right: 1.5rem;
     position: absolute;
@@ -682,10 +773,13 @@ body {
     left: 70px;
     right: 0;
     bottom: 0;
-    white-space: pre-wrap;
+    white-space: pre;
     pointer-events: none;
     padding-right: 1.5rem;
-    color: transparent; /* Hide the pre text */
+    color: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
 }
 
 /* Syntax Highlighting Colors */
@@ -711,11 +805,11 @@ body {
 /* Dropdown Menu */
 .dropdown-menu {
     position: absolute;
-    background-color: var(--bg-container);
+    background-color: var(--bg-header);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 10px var(--shadow-dark);
     z-index: 1001;
     display: flex;
     flex-direction: column;
