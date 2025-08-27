@@ -1,12 +1,5 @@
-/**
- * Global Error Tracking and Reporting Script
- * * This script is designed to be a standalone, global error handler for web applications.
- * It tracks various types of errors (script, unhandled promise rejections, and custom errors)
- * and provides a user-friendly interface to view and manage them.
- * * To use, simply include this file as the very first script in your index.html head.
- * Example: <script src="error.js"></script>
- */
-
+// This file is the core of our custom code editor and file system logic.
+// It has no external dependencies.
 (function() {
     'use strict';
 
@@ -14,7 +7,6 @@
     const errorLog = [];
     let isUIInitialized = false;
 
-    // Configuration for the UI
     const config = {
         buttonId: 'error-tracker-btn',
         containerId: 'error-tracker-container',
@@ -26,16 +18,6 @@
         fontSize: '14px',
     };
 
-    /**
-     * Captures and logs an error with detailed information.
-     * @param {object} error - The error object.
-     * @param {string} type - The type of error (e.g., 'Script', 'Promise').
-     * @param {string} message - The error message.
-     * @param {string} source - The file where the error occurred.
-     * @param {number} lineno - The line number of the error.
-     * @param {number} colno - The column number of the error.
-     * @param {string} stack - The error stack trace.
-     */
     const logError = (error, type, message, source, lineno, colno, stack) => {
         const timestamp = new Date().toLocaleString();
         const newError = {
@@ -51,18 +33,14 @@
         };
 
         if (errorLog.length >= config.maxErrors) {
-            errorLog.shift(); // Remove the oldest error
+            errorLog.shift();
         }
         errorLog.push(newError);
         console.error(`[${type} Error]: ${message}`, newError);
         updateUI();
     };
 
-    /**
-     * Attaches global event listeners to capture various error types.
-     */
     const setupErrorListeners = () => {
-        // Capture standard script errors
         window.addEventListener('error', (event) => {
             logError(
                 event.error,
@@ -73,10 +51,9 @@
                 event.colno,
                 event.error ? event.error.stack : 'N/A'
             );
-            return false; // Prevent default browser error handling
+            return false;
         });
 
-        // Capture unhandled promise rejections
         window.addEventListener('unhandledrejection', (event) => {
             logError(
                 event.reason,
@@ -90,13 +67,9 @@
         });
     };
 
-    /**
-     * Renders the floating error button and main container to the DOM.
-     */
     const initializeUI = () => {
         if (isUIInitialized) return;
 
-        // Button styles
         const button = document.createElement('button');
         button.id = config.buttonId;
         button.style.cssText = `
@@ -106,20 +79,20 @@
             width: ${config.buttonSize};
             height: ${config.buttonSize};
             border-radius: 50%;
-            background-color: red;
+            background-color: #EF4444; /* Brighter red */
             color: white;
             border: none;
             cursor: pointer;
-            z-index: 2001; /* Updated z-index to be on top of the command bar */
+            z-index: 2001;
             font-size: ${config.fontSize};
             font-weight: bold;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             transition: transform 0.2s ease;
+            display: none; /* Initially hidden */
         `;
         button.textContent = '0';
         button.onclick = toggleErrorUI;
 
-        // Main container styles
         const container = document.createElement('div');
         container.id = config.containerId;
         container.style.cssText = `
@@ -138,7 +111,6 @@
             font-family: monospace;
         `;
         
-        // Header
         container.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0;">Errors</h2>
@@ -159,9 +131,6 @@
         isUIInitialized = true;
     };
 
-    /**
-     * Toggles the visibility of the main error UI container.
-     */
     const toggleErrorUI = () => {
         const container = document.getElementById(config.containerId);
         if (container) {
@@ -169,13 +138,16 @@
         }
     };
 
-    /**
-     * Updates the UI with the current number of errors and the error list.
-     */
     const updateUI = () => {
         if (!isUIInitialized) return;
         const button = document.getElementById(config.buttonId);
         const errorList = document.getElementById(config.listId);
+        
+        if (errorLog.length > 0) {
+            button.style.display = 'block';
+        } else {
+            button.style.display = 'none';
+        }
         
         if (button) {
             button.textContent = errorLog.length.toString();
@@ -204,10 +176,6 @@
         }
     };
 
-    /**
-     * Displays detailed information for a selected error.
-     * @param {Event} event - The click event from the error list.
-     */
     const showDetailedError = (event) => {
         const target = event.target.closest('.error-item');
         if (!target) return;
@@ -247,11 +215,7 @@
         }
     };
 
-    /**
-     * Initializes the entire script.
-     */
     const init = () => {
-        // Check if the DOM is already ready. This is crucial for scripts loaded in the head.
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 initializeUI();
@@ -267,7 +231,6 @@
 
 })();
 
-// Expose the logError function for manual use in other parts of the app
 window.logCustomError = (message, details) => {
     (function() {
         try {
