@@ -2,17 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
     <title>Titan Developer</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0C0C0C">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="error.js"></script>
     <script src="db.js"></script>
     <script src="code-engine.js"></script>
@@ -20,30 +21,34 @@
 </head>
 <body>
     <header class="app-header hidden">
-        <div class="page-header"></div>
+        <div class="page-header">
+            <button id="back-button" class="nav-btn back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            </button>
+        </div>
     </header>
     <header class="home-header"></header>
     <div id="app-container"></div>
     <div id="modal" class="modal hidden">
         <div class="modal-content">
             <div id="options-container" class="hidden">
-                <button id="create-new-file-btn">
+                <button id="create-new-file-btn" class="modal-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
                     <span>Create New File</span>
                 </button>
                 <div class="divider"></div>
-                <button id="new-repo-btn">
+                <button id="new-repo-btn" class="modal-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                     <span>New Repository</span>
                 </button>
-                <button id="new-folder-btn">
+                <button id="new-folder-btn" class="modal-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                     <span>New Folder</span>
                 </button>
             </div>
             <div id="input-section" class="hidden">
                 <h3 id="filename-title"></h3>
-                <input type="text" id="filename" placeholder="Enter name" disabled>
+                <input type="text" id="filename" placeholder="Enter name" autofocus>
                 <div class="button-group">
                     <button id="confirm-btn" disabled>Confirm</button>
                     <button id="cancel-btn">Cancel</button>
