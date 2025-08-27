@@ -2,11 +2,9 @@
 File: /app.js
 */
 
-// This file orchestrates the entire application, handling UI rendering,
-// user interactions, and page navigation.
+// Orchestrates the application, handling UI rendering, user interactions, and navigation.
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Wait for the database to be ready before initializing the app.
     try {
         await window.db.ready;
     } catch (e) {
@@ -28,15 +26,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const newRepoBtn = document.getElementById('new-repo-btn');
     const newFolderBtn = document.getElementById('new-folder-btn');
 
-    // State object to manage app-wide variables
     const state = {
         currentPage: 'home',
         currentView: 'files',
         currentRepoId: null,
         expandedFolders: new Set(),
+        currentParentId: null,
     };
 
-    // View Manager for handling page transitions and state
     const viewManager = {
         history: [{ page: 'home', data: {} }],
         push(pageName, data = {}) {
@@ -58,17 +55,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
     };
 
-    // --- Event Listeners & Router ---
-    document.getElementById('back-button')?.addEventListener('click', () => {
-        viewManager.pop();
+    // --- Event Listeners ---
+    cancelBtn.addEventListener('click', () => hideModal());
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal || e.target.id === 'cancel-btn') hideModal();
     });
 
-    document.getElementById('new-item-button')?.addEventListener('click', () => {
-        showModal('options');
+    filenameInput.addEventListener('input', () => {
+        confirmBtn.classList.toggle('enabled', filenameInput.value.trim().length > 0);
+        confirmBtn.disabled = filenameInput.value.trim().length === 0;
     });
 
     newFileBtn.addEventListener('click', () => {
-        showModal('input', { type: 'file', repoId: state.currentRepoId });
+        showModal('input', { type: 'file', repoId: state.currentRepoId, parentId: state.currentParentId });
         filenameInput.disabled = false;
         filenameInput.focus();
     });
@@ -80,86 +79,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     newFolderBtn.addEventListener('click', () => {
-        showModal('input', { type: 'folder', repoId: state.currentRepoId });
+        showModal('input', { type: 'folder', repoId: state.currentRepoId, parentId: state.currentParentId });
         filenameInput.disabled = false;
         filenameInput.focus();
     });
 
-    cancelBtn.addEventListener('click', () => {
-        hideModal();
-    });
-
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal || e.target.id === 'cancel-btn') {
-            hideModal();
-        }
-    });
-
-    filenameInput.addEventListener('input', () => {
-        if (filenameInput.value.trim().length > 0) {
-            confirmBtn.classList.add('enabled');
-            confirmBtn.disabled = false;
-        } else {
-            confirmBtn.classList.remove('enabled');
-            confirmBtn.disabled = true;
-        }
-    });
-
     confirmBtn.addEventListener('click', async () => {
         const name = filenameInput.value.trim();
-        if (name === '') return;
+        if (!name) return;
 
-        const type = filenameTitle.textContent.toLowerCase().includes('file') ? 'file' : (filenameTitle.textContent.toLowerCase().includes('folder') ? 'folder' : 'repo');
-        const store = type === 'repo' ? 'repositories' : 'files';
-        const newItem = { name, type, content: type === 'folder' ? null : '' };
-        if (type !== 'repo' && state.currentRepoId) {
-            newItem.repositoryId = state.currentRepoId;
-            if (state.currentParentId) newItem.parentId = state.currentParentId;
-        }
+        const isRename = filenameTitle.textContent === 'Rename';
+        const store = isRename || filenameTitle.textContent.includes('Repository') ? 'repositories' : 'files';
+        const newItem = {
+            name,
+            content: store === 'files' && filenameTitle.textContent !== 'New Folder' ? '' : null,
+            type: store === 'files' ? (filenameTitle.textContent === 'New Folder' ? 'folder' : 'file') : null,
+            repositoryId: store === 'files' ? state.currentRepoId : null,
+            parentId: store === 'files' ? state.currentParentId : null,
+        };
 
         try {
-            const newItemId = await window.db.addItem(store, newItem);
-            console.log(`${type} created:`, newItem);
+            if (isRename) {
+                await window.db.updateItem(options.store, options.itemId, { name });
+            } else {
+                await window.db.addItem(store, newItem);
+            }
             hideModal();
-            if (type === 'file') {
-                const createdFile = await window.db.getItemById('files', newItemId);
-                if (state.currentRepoId) {
-                    // Refresh repo tree view
-                    const repo = await window.db.getItemById('repositories', state.currentRepoId);
-                    viewManager.push('repo-tree', { repo });
-                } else {
-                    viewManager.push('editor', { file: createdFile });
-                }
-            } else if (type === 'folder') {
-                // Refresh repo tree
+            if (store === 'files' && state.currentRepoId) {
                 const repo = await window.db.getItemById('repositories', state.currentRepoId);
                 viewManager.push('repo-tree', { repo });
             } else {
                 renderMainContent();
             }
         } catch (e) {
-            console.error("Error creating item:", e);
-            window.logCustomError("Failed to create new item", e);
+            console.error("Error creating/updating item:", e);
+            window.logCustomError("Failed to create/update item", e);
             alert("An error occurred. Please try again.");
         }
     });
 
-    // Handle incoming errors from the error.js module
-    document.addEventListener('app-error', (e) => {
-        console.warn('App-level error received:', e.detail);
-    });
-
-    // Initialize the app
-    viewManager.push('home');
-
     // --- UI Rendering Functions ---
     async function renderPage(pageName, data = {}) {
         state.currentPage = pageName;
-        if (pageName === 'repo-tree' && data.repo) {
-            state.currentRepoId = data.repo.id;
-        } else if (pageName !== 'repo-tree') {
-            state.currentRepoId = null;
-        }
+        state.currentRepoId = pageName === 'repo-tree' && data.repo ? data.repo.id : null;
+        state.currentParentId = null;
         appContainer.innerHTML = '';
         hideModal();
 
@@ -175,7 +138,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 break;
             default:
                 appContainer.innerHTML = '<div class="error-state"><h1>Page Not Found</h1><p>The page you requested does not exist.</p></div>';
-                break;
         }
     }
 
@@ -183,21 +145,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const navPill = document.getElementById('nav-pill');
         const navPillFiles = document.getElementById('nav-pill-files');
         const navPillRepos = document.getElementById('nav-pill-repos');
+        if (!navPill || !navPillFiles || !navPillRepos) return;
 
-        if (!navPill || !navPillFiles || !navPillRepos) {
-            console.warn("Nav pill elements not found. Skipping update.");
-            return;
-        }
-
-        if (state.currentView === 'files') {
-            navPill.style.transform = 'translateX(0)';
-            navPillFiles.classList.add('active');
-            navPillRepos.classList.remove('active');
-        } else {
-            navPill.style.transform = 'translateX(100%)';
-            navPillFiles.classList.remove('active');
-            navPillRepos.classList.add('active');
-        }
+        navPill.style.transform = state.currentView === 'files' ? 'translateX(0)' : 'translateX(100%)';
+        navPillFiles.classList.toggle('active', state.currentView === 'files');
+        navPillRepos.classList.toggle('active', state.currentView === 'repositories');
     }
 
     async function renderHomePage() {
@@ -213,12 +165,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <button id="nav-pill-repos" class="nav-pill-button">Repositories</button>
                     </div>
                     <button id="new-item-button" class="nav-btn">
-                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
                     </button>
                 </div>
                 <div id="main-content" class="scrollable-content"></div>
             </div>
         `;
+
         document.getElementById('nav-pill-files').addEventListener('click', () => {
             state.currentView = 'files';
             updateNavPill();
@@ -261,14 +214,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 `;
             }).join('');
-            mainContent.innerHTML = fileListHtml || '<div class="no-items">No files found. Tap the "plus" button to create one.</div>';
+            mainContent.innerHTML = fileListHtml || '<div class="no-items">No files found. Tap the "+" button to create one.</div>';
             mainContent.querySelectorAll('.file-item').forEach(item => {
                 item.addEventListener('click', async (e) => {
+                    if (e.target.closest('.dropdown-trigger')) return;
                     const id = parseInt(item.dataset.id);
                     const file = await window.db.getItemById('files', id);
-                    if (file) {
-                        viewManager.push('editor', { file });
-                    }
+                    if (file) viewManager.push('editor', { file });
                 });
                 item.querySelector('.dropdown-trigger').addEventListener('click', (e) => showItemMenu(e, item.dataset.id, 'file'));
             });
@@ -296,9 +248,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (e.target.closest('.dropdown-trigger')) return;
                     const id = parseInt(item.dataset.id);
                     const repo = await window.db.getItemById('repositories', id);
-                    if (repo) {
-                        viewManager.push('repo-tree', { repo });
-                    }
+                    if (repo) viewManager.push('repo-tree', { repo });
                 });
                 item.querySelector('.dropdown-trigger').addEventListener('click', (e) => showItemMenu(e, item.dataset.id, 'repo'));
             });
@@ -348,7 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const iconClass = isFolder ? 'folder-bg' : window.fileEngine.getFileIconClass(window.fileEngine.getFileType(item.name));
             const iconSvg = isFolder ? window.fileEngine.getIconSvg('folder') : window.fileEngine.getIconSvg(window.fileEngine.getFileType(item.name));
             html += `
-                <div class="file-item ${isFolder ? 'folder-item' : ''}" data-id="${item.id}" data-type="${item.type}" style="padding-left: ${level * 1.5}rem;">
+                <div class="file-item ${isFolder ? 'folder-item' : ''} ${expanded ? 'expanded' : ''}" data-id="${item.id}" data-type="${item.type}" style="padding-left: ${level * 1.5}rem;">
                     <div class="file-icon-bg ${iconClass}">
                         <svg>${iconSvg}</svg>
                     </div>
@@ -362,10 +312,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </button>
                     </div>
                 </div>
+                ${isFolder && expanded ? `<div class="sub-items" data-parent-id="${item.id}"></div>` : ''}
             `;
-            if (isFolder && expanded) {
-                html += `<div class="sub-items" data-parent-id="${item.id}"></div>`;
-            }
         });
         container.innerHTML = html || '<div class="no-items">No items in this repository. Create one to get started!</div>';
 
@@ -376,129 +324,95 @@ document.addEventListener('DOMContentLoaded', async () => {
                 item.addEventListener('click', async (e) => {
                     if (e.target.closest('.dropdown-trigger')) return;
                     const file = await window.db.getItemById('files', id);
-                    if (file) {
-                        viewManager.push('editor', { file });
-                    }
+                    if (file) viewManager.push('editor', { file });
                 });
             } else if (type === 'folder') {
                 item.addEventListener('click', async (e) => {
                     if (e.target.closest('.dropdown-trigger')) return;
-                    const expanded = state.expandedFolders.has(id);
-                    if (expanded) {
-                        state.expandedFolders.delete(id);
-                    } else {
-                        state.expandedFolders.add(id);
-                    }
-                    await renderRepoContent(repoId, container, null, 0); // Re-render whole tree
+                    state.expandedFolders[state.expandedFolders.has(id) ? 'delete' : 'add'](id);
+                    await renderRepoContent(repoId, container);
                 });
             }
             item.querySelector('.dropdown-trigger').addEventListener('click', (e) => showItemMenu(e, id, type));
         });
 
-        // Render sub-items for expanded folders
         repoItems.forEach(async (item) => {
             if (item.type === 'folder' && state.expandedFolders.has(item.id)) {
                 const subContainer = container.querySelector(`[data-parent-id="${item.id}"]`);
-                if (subContainer) {
-                    await renderRepoContent(repoId, subContainer, item.id, level + 1);
-                }
+                if (subContainer) await renderRepoContent(repoId, subContainer, item.id, level + 1);
             }
         });
     }
 
     async function showItemMenu(e, id, type) {
         const existingMenu = document.querySelector('.dropdown-menu');
-        if (existingMenu) {
-            existingMenu.remove();
-            return;
-        }
+        if (existingMenu) existingMenu.remove();
 
         const menu = document.createElement('div');
         menu.className = 'dropdown-menu';
-        let html = '';
-        if (type === 'file') {
-            html = `
-                <button data-action="download">Download</button>
-                <button data-action="delete">Delete</button>
-                <button data-action="rename">Rename</button>
-                <button data-action="move">Move to Folder</button>
-            `;
-        } else if (type === 'folder') {
-            html = `
-                <button data-action="rename">Rename</button>
-                <button data-action="delete">Delete</button>
-            `;
-        } else if (type === 'repo') {
-            html = `
-                <button data-action="delete">Delete</button>
-                <button data-action="rename">Rename</button>
-            `;
-        }
-        menu.innerHTML = html;
-        menu.style.top = `${e.currentTarget.getBoundingClientRect().top + window.scrollY + 20}px`;
-        menu.style.left = `${e.currentTarget.getBoundingClientRect().left + window.scrollX - 150}px`; // Position to left for visibility
+        menu.innerHTML = type === 'file' ? `
+            <button data-action="download">Download</button>
+            <button data-action="delete">Delete</button>
+            <button data-action="rename">Rename</button>
+            <button data-action="move">Move to Folder</button>
+        ` : type === 'folder' ? `
+            <button data-action="rename">Rename</button>
+            <button data-action="delete">Delete</button>
+        ` : `
+            <button data-action="rename">Rename</button>
+            <button data-action="delete">Delete</button>
+        `;
+        menu.style.top = `${e.currentTarget.getBoundingClientRect().top + window.scrollY + 30}px`;
+        menu.style.left = `${e.currentTarget.getBoundingClientRect().left + window.scrollX - 120}px`;
         document.body.appendChild(menu);
 
         menu.querySelectorAll('button').forEach(btn => {
             btn.addEventListener('click', async (event) => {
                 const action = event.currentTarget.dataset.action;
                 try {
-                    switch (action) {
-                        case 'download':
-                            const file = await window.db.getItemById('files', id);
-                            if (file) {
-                                window.fileEngine.downloadFile(file.name, file.content);
+                    if (action === 'download' && type === 'file') {
+                        const file = await window.db.getItemById('files', id);
+                        window.fileEngine.downloadFile(file.name, file.content);
+                    } else if (action === 'delete') {
+                        if (type === 'folder') {
+                            const children = await window.db.getAllItems('files');
+                            if (children.some(child => child.parentId === id)) {
+                                alert('Folder is not empty. Delete contents first.');
+                                return;
                             }
-                            break;
-                        case 'delete':
-                            if (confirm(`Are you sure you want to delete this ${type}?`)) {
-                                if (type === 'folder') {
-                                    const children = await window.db.getAllItems('files');
-                                    const hasChildren = children.some(child => child.parentId === id);
-                                    if (hasChildren) {
-                                        alert('Folder is not empty. Delete contents first.');
-                                        return;
-                                    }
-                                }
-                                await window.db.deleteItem(type === 'repo' ? 'repositories' : 'files', id);
-                                if (state.currentPage === 'repo-tree') {
-                                    const repo = await window.db.getItemById('repositories', state.currentRepoId);
-                                    viewManager.push('repo-tree', { repo });
-                                } else {
-                                    renderMainContent();
-                                }
+                        }
+                        if (confirm(`Are you sure you want to delete this ${type}?`)) {
+                            await window.db.deleteItem(type === 'repo' ? 'repositories' : 'files', id);
+                            if (state.currentPage === 'repo-tree') {
+                                const repo = await window.db.getItemById('repositories', state.currentRepoId);
+                                viewManager.push('repo-tree', { repo });
+                            } else {
+                                renderMainContent();
                             }
-                            break;
-                        case 'rename':
-                            const item = await window.db.getItemById(type === 'repo' ? 'repositories' : 'files', id);
-                            if (item) {
-                                showModal('input', { type: 'rename', itemId: id, store: type === 'repo' ? 'repositories' : 'files', currentName: item.name });
-                            }
-                            break;
-                        case 'move':
-                            const folders = await window.db.getAllItems('files');
-                            const repoFolders = folders.filter(f => f.repositoryId === state.currentRepoId && f.type === 'folder' && f.id !== id);
-                            const moveMenu = document.createElement('div');
-                            moveMenu.className = 'dropdown-menu sub-menu';
-                            moveMenu.innerHTML = repoFolders.map(folder => `<button data-folder-id="${folder.id}">${folder.name}</button>`).join('');
-                            moveMenu.style.top = `${event.currentTarget.getBoundingClientRect().top + window.scrollY + 20}px`;
-                            moveMenu.style.left = `${event.currentTarget.getBoundingClientRect().left + window.scrollX}px`;
-                            document.body.appendChild(moveMenu);
-                            moveMenu.querySelectorAll('button').forEach(subBtn => {
-                                subBtn.addEventListener('click', async (subEvent) => {
-                                    const folderId = parseInt(subEvent.currentTarget.dataset.folderId);
-                                    await window.db.updateItem('files', id, { parentId: folderId });
-                                    const repo = await window.db.getItemById('repositories', state.currentRepoId);
-                                    viewManager.push('repo-tree', { repo });
-                                    moveMenu.remove();
-                                });
+                        }
+                    } else if (action === 'rename') {
+                        const item = await window.db.getItemById(type === 'repo' ? 'repositories' : 'files', id);
+                        showModal('input', { type: 'rename', itemId: id, store: type === 'repo' ? 'repositories' : 'files', currentName: item.name });
+                    } else if (action === 'move' && type === 'file') {
+                        const folders = await window.db.getAllItems('files');
+                        const repoFolders = folders.filter(f => f.repositoryId === state.currentRepoId && f.type === 'folder' && f.id !== id);
+                        const moveMenu = document.createElement('div');
+                        moveMenu.className = 'dropdown-menu sub-menu';
+                        moveMenu.innerHTML = repoFolders.length ? repoFolders.map(folder => `<button data-folder-id="${folder.id}">${folder.name}</button>`).join('') : '<button disabled>No folders available</button>';
+                        moveMenu.style.top = `${event.currentTarget.getBoundingClientRect().top + window.scrollY + 30}px`;
+                        moveMenu.style.left = `${event.currentTarget.getBoundingClientRect().left + window.scrollX + 30}px`;
+                        document.body.appendChild(moveMenu);
+                        moveMenu.querySelectorAll('button:not([disabled])').forEach(subBtn => {
+                            subBtn.addEventListener('click', async () => {
+                                await window.db.updateItem('files', id, { parentId: parseInt(subBtn.dataset.folderId) });
+                                const repo = await window.db.getItemById('repositories', state.currentRepoId);
+                                viewManager.push('repo-tree', { repo });
+                                moveMenu.remove();
                             });
-                            document.addEventListener('click', (closeEvent) => {
-                                if (!moveMenu.contains(closeEvent.target)) {
-                                    moveMenu.remove();
-                                }
-                            }, { once: true });
-                            break;
+                        });
+                        document.addEventListener('click', (closeEvent) => {
+                            if (!moveMenu.contains(closeEvent.target)) moveMenu.remove();
+                        }, { once: true });
                     }
                 } catch (e) {
                     alert('An error occurred.');
@@ -509,51 +423,192 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         document.addEventListener('click', (closeEvent) => {
-            if (!menu.contains(closeEvent.target) && !e.currentTarget.contains(closeEvent.target)) {
-                menu.remove();
-            }
+            if (!menu.contains(closeEvent.target) && !e.currentTarget.contains(closeEvent.target)) menu.remove();
         }, { once: true });
     }
 
     async function renderCodeEditorPage(data) {
-        // (unchanged from previous version)
-        // ... [omitted for brevity, but include the full function as before]
+        document.querySelector('.app-header')?.classList.remove('hidden');
+        document.querySelector('.home-header')?.classList.add('hidden');
+        const file = data.file || { name: 'untitled', content: '' };
+
+        const fileType = window.fileEngine.getFileType(file.name);
+        const fileIconClass = window.fileEngine.getFileIconClass(fileType);
+
+        appContainer.innerHTML = `
+            <div class="code-editor-page">
+                <header class="page-header editor-header">
+                    <button id="editor-back-btn" class="nav-btn back-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                    </button>
+                    <div class="header-file-info">
+                        <div class="file-icon-bg ${fileIconClass} mini-icon">
+                            <svg>${window.fileEngine.getIconSvg(fileType)}</svg>
+                        </div>
+                        <h2 class="header-title">${file.name}</h2>
+                    </div>
+                    <div class="header-buttons right">
+                        <button class="nav-btn dropdown-trigger" id="editor-file-menu">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/></svg>
+                        </button>
+                    </div>
+                </header>
+                <div class="code-editor-container">
+                    <div class="line-numbers"></div>
+                    <textarea id="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+                    <pre class="syntax-highlighting-layer" aria-hidden="true"></pre>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('editor-back-btn').addEventListener('click', () => viewManager.pop());
+
+        const editor = document.getElementById('code-editor');
+        const lineNumbers = document.querySelector('.line-numbers');
+        const highlighter = document.querySelector('.syntax-highlighting-layer');
+
+        let codeContent = file.content || '';
+        editor.value = codeContent;
+
+        const updateLineNumbers = () => {
+            const lines = editor.value.split('\n');
+            const lineCount = lines.length;
+            lineNumbers.innerHTML = Array.from({ length: lineCount }, (_, i) => `<div>${i + 1}</div>`).join('');
+        };
+
+        const updateSyntaxHighlighting = () => {
+            highlighter.innerHTML = window.fileEngine.highlightCode(editor.value, file.name);
+        };
+
+        const syncScroll = () => {
+            lineNumbers.scrollTop = editor.scrollTop;
+            highlighter.scrollTop = editor.scrollTop;
+            highlighter.scrollLeft = editor.scrollLeft;
+        };
+
+        const updateEditor = () => {
+            updateLineNumbers();
+            updateSyntaxHighlighting();
+            syncScroll();
+        };
+
+        editor.addEventListener('input', updateEditor);
+        editor.addEventListener('scroll', syncScroll);
+
+        editor.addEventListener('keydown', (e) => {
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const currentLine = text.substring(0, start).split('\n').pop();
+                const indent = currentLine.match(/^\s*/)[0];
+                const newText = text.substring(0, start) + '\n' + indent + text.substring(end);
+                editor.value = newText;
+                editor.selectionStart = editor.selectionEnd = start + indent.length + 1;
+                updateEditor();
+            }
+
+            const pairs = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
+            if (pairs[e.key]) {
+                e.preventDefault();
+                const newText = text.substring(0, start) + e.key + pairs[e.key] + text.substring(end);
+                editor.value = newText;
+                editor.selectionStart = editor.selectionEnd = start + 1;
+                updateEditor();
+            }
+        });
+
+        const resizeEditor = () => {
+            editor.style.width = `${window.innerWidth - 70}px`;
+            highlighter.style.width = `${window.innerWidth - 70}px`;
+            updateEditor();
+        };
+
+        window.addEventListener('resize', resizeEditor);
+        resizeEditor();
+
+        let saveTimeout = null;
+        editor.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                await window.db.updateItem('files', file.id, { content: editor.value });
+                console.log('Autosaved.');
+            }, 3000);
+        });
+
+        document.getElementById('editor-file-menu').addEventListener('click', (e) => {
+            const existingMenu = document.querySelector('.dropdown-menu');
+            if (existingMenu) {
+                existingMenu.remove();
+                return;
+            }
+
+            const menu = document.createElement('div');
+            menu.className = 'dropdown-menu';
+            menu.innerHTML = `
+                <button data-action="save">Save</button>
+                <button data-action="download">Download</button>
+                <button data-action="copy">Copy All</button>
+            `;
+            menu.style.top = `${e.currentTarget.getBoundingClientRect().top + window.scrollY + 30}px`;
+            menu.style.right = '20px';
+            document.body.appendChild(menu);
+
+            menu.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', async (event) => {
+                    const action = event.currentTarget.dataset.action;
+                    const content = editor.value;
+                    try {
+                        switch (action) {
+                            case 'save':
+                                await window.db.updateItem('files', file.id, { content });
+                                alert('File saved successfully!');
+                                break;
+                            case 'download':
+                                window.fileEngine.downloadFile(file.name, content);
+                                break;
+                            case 'copy':
+                                await navigator.clipboard.writeText(content);
+                                alert('Code copied to clipboard!');
+                                break;
+                        }
+                    } catch (e) {
+                        alert('An error occurred.');
+                        console.error(e);
+                    }
+                    menu.remove();
+                });
+            });
+
+            document.addEventListener('click', (closeEvent) => {
+                if (!menu.contains(closeEvent.target) && !e.currentTarget.contains(closeEvent.target)) {
+                    menu.remove();
+                }
+            }, { once: true });
+        });
     }
 
     function showModal(type, options = {}) {
         modal.classList.remove('hidden');
         setTimeout(() => {
             modal.classList.add('show');
+            optionsContainer.classList.toggle('hidden', type !== 'options');
+            inputSection.classList.toggle('hidden', type !== 'input');
             if (type === 'options') {
-                optionsContainer.classList.remove('hidden');
-                inputSection.classList.add('hidden');
-                // Conditional options based on page
-                if (state.currentPage === 'repo-tree') {
-                    newRepoBtn.style.display = 'none';
-                    newFolderBtn.style.display = 'block';
-                } else {
-                    newRepoBtn.style.display = 'block';
-                    newFolderBtn.style.display = 'none';
-                }
+                newRepoBtn.style.display = state.currentPage === 'home' ? 'block' : 'none';
+                newFolderBtn.style.display = state.currentPage === 'repo-tree' ? 'block' : 'none';
             } else if (type === 'input') {
-                optionsContainer.classList.add('hidden');
-                inputSection.classList.remove('hidden');
-                if (options.type === 'file') {
-                    filenameTitle.textContent = 'New File';
-                    filenameInput.placeholder = 'e.g., index.html';
-                } else if (options.type === 'folder') {
-                    filenameTitle.textContent = 'New Folder';
-                    filenameInput.placeholder = 'e.g., my-folder';
-                } else if (options.type === 'repo') {
-                    filenameTitle.textContent = 'New Repository';
-                    filenameInput.placeholder = 'e.g., my-pwa-project';
-                } else if (options.type === 'rename') {
-                    filenameTitle.textContent = 'Rename';
-                    filenameInput.placeholder = 'Enter new name';
-                    filenameInput.value = options.currentName;
-                    confirmBtn.addEventListener('click', async () => {
+                filenameTitle.textContent = options.type === 'rename' ? 'Rename' : `New ${options.type.charAt(0).toUpperCase() + options.type.slice(1)}`;
+                filenameInput.placeholder = options.type === 'file' ? 'e.g., index.html' : options.type === 'folder' ? 'e.g., src' : 'e.g., my-project';
+                filenameInput.value = options.currentName || '';
+                state.currentRepoId = options.repoId || null;
+                state.currentParentId = options.parentId || null;
+                if (options.type === 'rename') {
+                    confirmBtn.onclick = async () => {
                         const newName = filenameInput.value.trim();
-                        if (newName === '') return;
+                        if (!newName) return;
                         await window.db.updateItem(options.store, options.itemId, { name: newName });
                         hideModal();
                         if (state.currentPage === 'repo-tree') {
@@ -562,15 +617,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         } else {
                             renderMainContent();
                         }
-                    }, { once: true });
-                }
-                if (options.repoId) {
-                    state.currentRepoId = options.repoId;
-                }
-                if (options.parentId) {
-                    state.currentParentId = options.parentId;
+                    };
                 } else {
-                    state.currentParentId = null;
+                    confirmBtn.onclick = null; // Reset to default handler
                 }
             }
         }, 10);
