@@ -2,8 +2,8 @@
 File: /sw.js
 */
 
-const CACHE_NAME = 'titan-dev-cache-v1';
-const urlsToCache = ['/', '/index.html', '/styles.css', '/app.js', '/code-engine.js', '/db.js', '/error.js', '/manifest.json'];
+const CACHE_NAME = 'titan-dev-cache-v2'; // Updated cache name
+const urlsToCache = ['/', '/index.html', '/styles.css', '/app.js', '/code-engine.js', '/db.js', '/error.js', '/manifest.json', '/icon.png'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -48,5 +48,5 @@ self.addEventListener('fetch', (event) => {
         }
     };
 
-    event.respondWith(event.request.url.includes('gemini.google.com') ? networkFirst() : cacheFirst());
+    event.respondWith(event.request.url.includes('fonts.googleapis.com') || event.request.url.includes('fonts.gstatic.com') ? networkFirst() : cacheFirst());
 });
