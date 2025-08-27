@@ -9,6 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon.png">
+    <script src="db.js" defer></script>
     <script src="app.js" defer></script>
 </head>
 <body>
@@ -21,6 +22,7 @@
                 <button id="new-repo-btn">New Repository</button>
             </div>
             <div id="input-section" class="hidden">
+                <h3 id="filename-title"></h3>
                 <input type="text" id="filename" placeholder="Enter name" disabled>
                 <div class="button-group">
                     <button id="confirm-btn" disabled>Confirm</button>
