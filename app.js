@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.project-card').forEach(card => {
             card.addEventListener('click', async (e) => {
                 e.preventDefault();
-                const repoId = parseInt(card.dataset.repoId);
+                const repoId = parseInt(card.dataset.repo-id);
                 const repositories = await db.getAllItems('repositories');
                 activeRepo = repositories.find(repo => repo.id === repoId);
                 if (activeRepo) {
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.repo-item').forEach(item => {
             item.addEventListener('click', async (e) => {
                 e.preventDefault();
-                const repoId = parseInt(item.dataset.repoId);
+                const repoId = parseInt(item.dataset.repo-id);
                 const repositories = await db.getAllItems('repositories');
                 activeRepo = repositories.find(repo => repo.id === repoId);
                 if (activeRepo) {
