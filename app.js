@@ -1,7 +1,12 @@
+/*
+File: /app.js
+*/
+
 // This file orchestrates the entire application, handling UI rendering,
 // user interactions, and page navigation.
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Wait for the database to be ready before initializing the app.
     try {
         await window.db.ready;
     } catch (e) {
@@ -10,356 +15,296 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // --- Core UI & State Management ---
     const appContainer = document.getElementById('app-container');
     const modal = document.getElementById('modal');
     const optionsContainer = document.getElementById('options-container');
-    const createNewFileBtn = document.getElementById('create-new-file-btn');
-    const newRepoBtn = document.getElementById('new-repo-btn');
     const inputSection = document.getElementById('input-section');
     const filenameInput = document.getElementById('filename');
     const confirmBtn = document.getElementById('confirm-btn');
     const cancelBtn = document.getElementById('cancel-btn');
     const filenameTitle = document.getElementById('filename-title');
+    const newFileBtn = document.getElementById('create-new-file-btn');
+    const newRepoBtn = document.getElementById('new-repo-btn');
+    const navPill = document.getElementById('nav-pill');
+    const navPillFiles = document.getElementById('nav-pill-files');
+    const navPillRepos = document.getElementById('nav-pill-repos');
 
-    const getIconSvg = (name) => {
-        const icons = {
-            newFile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>`,
-            openFile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`,
-            fileExplorer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"></line><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path><line x1="6" y1="16" x2="6.01" y2="16"></line><line x1="10" y1="16" x2="10.01" y2="16"></line></svg>`,
-            repository: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"></line><line x1="18" y1="6" x2="18" y2="18"></line><path d="M6 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><path d="M18 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><path d="M13 6h3.5a4.5 4.5 0 0 1 4.5 4.5v1"></path></svg>`,
-            settings: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83l-2.83 2.83a2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V22a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 5.12 19.4a1.65 1.65 0 0 0-1.82-.33L3.25 19.4a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 2-2h.09a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83l2.83-2.83a2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a2 2 0 0 1 2-2v-.09A1.65 1.65 0 0 0 12.88 2.6a1.65 1.65 0 0 0 1.82.33l.06-.06a2 2 0 0 1 2.83 0l2.83 2.83a2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a2 2 0 0 1 2 2h.09a1.65 1.65 0 0 0 1.51 1z"></path></svg>`,
-            profile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
-            home: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
-            recent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M12 8v4l3 3"></path></svg>`,
-            search: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`,
-            add: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
-            git: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4z"></path><path d="M22 6h-4"></path><path d="M14 14h-4"></path></svg>`,
-            ai: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11h2c-.5-3.32-3.8-6-7-6-3.79 0-7 2.21-7 6s3.21 6 7 6a6.99 6.99 0 005.18-2.52L17.5 15.5 19 14l-4.5-4.5zM7 7c2.42 0 4.5 2.1 4.5 4.5S9.42 16 7 16s-4.5-2.1-4.5-4.5S4.58 7 7 7z"/></svg>`,
-            save: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`,
-            download: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
-            share: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>`,
-            copy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`,
-            options: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>`,
-        };
-        return icons[name] || '';
+    // State object to manage app-wide variables
+    const state = {
+        currentPage: 'home',
+        currentView: 'files',
     };
 
-    const commandBar = document.createElement('div');
-    commandBar.className = 'command-bar';
-    commandBar.innerHTML = `
-        <a href="#" class="command-btn active" data-page="home">
-            ${getIconSvg('home')}
-            <span>Home</span>
-        </a>
-        <a href="#" class="command-btn" data-page="explore">
-            ${getIconSvg('fileExplorer')}
-            <span>Files</span>
-        </a>
-        <a href="#" class="command-btn" data-page="ai">
-            ${getIconSvg('ai')}
-            <span>AI</span>
-        </a>
-        <a href="#" class="command-btn" data-page="settings">
-            ${getIconSvg('settings')}
-            <span>Settings</span>
-        </a>
-        <a href="#" class="command-btn" data-page="new">
-            ${getIconSvg('add')}
-            <span>New</span>
-        </a>
-    `;
-    document.body.appendChild(commandBar);
-
-    renderPage('home');
-
-    document.querySelectorAll('.command-btn').forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            const page = e.currentTarget.dataset.page;
-            if (page === 'new') {
-                showModal('options');
-            } else {
-                renderPage(page);
+    // View Manager for handling page transitions and state
+    const viewManager = {
+        history: ['home'],
+        push(pageName, data = {}) {
+            if (this.history[this.history.length - 1] !== pageName) {
+                this.history.push(pageName);
             }
-        });
+            renderPage(pageName, data);
+        },
+        pop() {
+            if (this.history.length > 1) {
+                this.history.pop();
+                const lastPage = this.history[this.history.length - 1];
+                renderPage(lastPage);
+            }
+        },
+        reset() {
+            this.history = ['home'];
+            renderPage('home');
+        },
+    };
+
+    // --- Event Listeners & Router ---
+    navPillFiles.addEventListener('click', () => {
+        state.currentView = 'files';
+        updateNavPill();
+        renderMainContent();
     });
 
-    function renderPage(pageName, data = {}) {
-        document.querySelectorAll('.command-btn').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = document.querySelector(`.command-btn[data-page="${pageName}"]`);
-        if (activeBtn) {
-            activeBtn.classList.add('active');
-        }
+    navPillRepos.addEventListener('click', () => {
+        state.currentView = 'repositories';
+        updateNavPill();
+        renderMainContent();
+    });
 
+    document.getElementById('back-button').addEventListener('click', () => {
+        viewManager.pop();
+    });
+
+    document.getElementById('new-item-button').addEventListener('click', () => {
+        showModal('options');
+    });
+
+    newFileBtn.addEventListener('click', () => {
+        showModal('input', { type: 'file' });
+        filenameInput.disabled = false;
+        filenameInput.focus();
+    });
+
+    newRepoBtn.addEventListener('click', () => {
+        showModal('input', { type: 'repo' });
+        filenameInput.disabled = false;
+        filenameInput.focus();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        hideModal();
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal || e.target.id === 'cancel-btn') {
+            hideModal();
+        }
+    });
+
+    filenameInput.addEventListener('input', () => {
+        if (filenameInput.value.trim().length > 0) {
+            confirmBtn.classList.add('enabled');
+            confirmBtn.disabled = false;
+        } else {
+            confirmBtn.classList.remove('enabled');
+            confirmBtn.disabled = true;
+        }
+    });
+
+    confirmBtn.addEventListener('click', async () => {
+        const name = filenameInput.value.trim();
+        if (name === '') return;
+
+        const store = filenameTitle.textContent === 'New File' ? 'files' : 'repositories';
+        const newItem = { name, content: '' };
+
+        try {
+            const newItemId = await window.db.addItem(store, newItem);
+            console.log(`${store === 'files' ? 'File' : 'Repository'} created:`, newItem);
+            hideModal();
+            if (store === 'files') {
+                const createdFile = await window.db.getItemById('files', newItemId);
+                viewManager.push('editor', { file: createdFile });
+            } else {
+                renderMainContent();
+            }
+        } catch (e) {
+            console.error("Error creating item:", e);
+            window.logCustomError("Failed to create new item", e);
+            alert("An error occurred. Please try again.");
+        }
+    });
+
+    // Handle incoming errors from the error.js module
+    document.addEventListener('app-error', (e) => {
+        // You can now display this error within your app's UI
+        console.warn('App-level error received:', e.detail);
+        // Implement a polished toast or alert system here if desired
+    });
+
+    // Initialize the app
+    viewManager.push('home');
+
+    // --- UI Rendering Functions ---
+    async function renderPage(pageName, data = {}) {
+        state.currentPage = pageName;
         appContainer.innerHTML = '';
         hideModal();
-        appContainer.className = `page-${pageName}`;
-        document.querySelectorAll('.dropdown-menu').forEach(menu => menu.remove());
 
         switch (pageName) {
             case 'home':
                 renderHomePage();
                 break;
-            case 'explore':
-                renderFileExplorerPage();
-                break;
-            case 'ai':
-                renderAIPage();
-                break;
-            case 'settings':
-                renderSettingsPage();
-                break;
             case 'editor':
                 renderCodeEditorPage(data);
                 break;
             default:
-                appContainer.innerHTML = '<div class="floating-container fullscreen-container"><main class="page-content center-content"><h2>Page Not Found</h2><p>The page you requested does not exist.</p></div></main>';
+                // Handle 404
+                appContainer.innerHTML = '<div class="error-state"><h1>Page Not Found</h1><p>The page you requested does not exist.</p></div>';
                 break;
         }
     }
 
+    function updateNavPill() {
+        if (state.currentView === 'files') {
+            navPill.style.transform = 'translateX(0)';
+            navPillFiles.classList.add('active');
+            navPillRepos.classList.remove('active');
+        } else {
+            navPill.style.transform = 'translateX(100%)';
+            navPillFiles.classList.remove('active');
+            navPillRepos.classList.add('active');
+        }
+    }
+
     async function renderHomePage() {
-        const files = await window.db.getAllItems('files');
-        const recentProjectsHtml = files.slice(-10).reverse().map(file => `
-            <a href="#" class="project-card" data-file-id="${file.id}">
-                <div class="project-icon">
-                    <div class="project-icon-bg ${window.fileEngine.getFileType(file.name)}">
-                        <span class="file-label">${window.fileEngine.getFileType(file.name).toUpperCase()}</span>
+        document.querySelector('.app-header').classList.add('hidden');
+        document.querySelector('.home-header').classList.remove('hidden');
+
+        appContainer.innerHTML = `
+            <div class="main-content-container">
+                <div class="page-header home-header">
+                    <div class="nav-pill-container">
+                        <div id="nav-pill" class="nav-pill"></div>
+                        <button id="nav-pill-files" class="nav-pill-button active">Files</button>
+                        <button id="nav-pill-repos" class="nav-pill-button">Repository</button>
                     </div>
+                    <button id="new-item-button" class="nav-btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </button>
                 </div>
-                <div class="project-info">
-                    <span class="project-title">${file.name}</span>
-                    <span class="project-date">Last edited: ${new Date(file.timestamp).toLocaleDateString()}</span>
-                </div>
-            </a>
-        `).join('');
-
-        appContainer.innerHTML = `
-            <div class="floating-container fullscreen-container">
-                <main class="page-content home-page">
-                    <div class="logo">
-                        <h1 class="titan">TITAN</h1>
-                        <span class="developer">Developer</span>
-                    </div>
-                    <div class="section-title-container">
-                        <h2>Recent Projects</h2>
-                        <a href="#" onclick="renderPage('explore'); return false;">View All</a>
-                    </div>
-                    <div class="recent-projects-scroll-container">
-                        <div class="recent-projects-grid">
-                            ${recentProjectsHtml || '<div class="no-projects">No recent projects. Create one now!</div>'}
-                        </div>
-                    </div>
-                </main>
+                <div id="main-content" class="scrollable-content"></div>
             </div>
         `;
-        document.querySelectorAll('.project-card').forEach(card => {
-            card.addEventListener('click', async (e) => {
-                e.preventDefault();
-                const fileId = parseInt(card.dataset.fileId);
-                const file = await window.db.getItemById('files', fileId);
-                if (file) {
-                    renderPage('editor', { file });
-                } else {
-                    alert('File not found.');
-                }
-            });
+        document.getElementById('nav-pill-files').addEventListener('click', () => {
+            state.currentView = 'files';
+            updateNavPill();
+            renderMainContent();
         });
+        document.getElementById('nav-pill-repos').addEventListener('click', () => {
+            state.currentView = 'repositories';
+            updateNavPill();
+            renderMainContent();
+        });
+        document.getElementById('new-item-button').addEventListener('click', () => showModal('options'));
+
+        updateNavPill();
+        renderMainContent();
     }
 
-    function renderAIPage() {
-        appContainer.innerHTML = `
-            <div class="floating-container fullscreen-container">
-                <main class="page-content ai-page">
-                    <header class="page-header">
-                        <h2>Titan AI</h2>
-                    </header>
-                    <div class="chat-history">
-                        <div class="chat-message titan-ai-message">Hello! I'm Titan AI. How can I help with your code today?</div>
-                    </div>
-                    <div class="input-area">
-                        <textarea id="titan-ai-prompt-input" placeholder="Ask AI to write code..."></textarea>
-                        <button id="titan-ai-send-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                            </svg>
-                        </button>
-                    </div>
-                </main>
-            </div>
-        `;
+    async function renderMainContent() {
+        const mainContent = document.getElementById('main-content');
+        if (!mainContent) return;
 
-        const chatHistory = document.querySelector('.chat-history');
-        const promptInput = document.getElementById('titan-ai-prompt-input');
-        const sendBtn = document.getElementById('titan-ai-send-btn');
-
-        sendBtn.addEventListener('click', async () => {
-            const userMessage = promptInput.value.trim();
-            if (userMessage === '') return;
-            
-            chatHistory.innerHTML += `<div class="chat-message user-message">${userMessage}</div>`;
-            promptInput.value = '';
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-
-            chatHistory.innerHTML += `<div class="chat-message titan-ai-message loading-message">
-                <span class="loading-dot"></span>
-                <span class="loading-dot"></span>
-                <span class="loading-dot"></span>
-            </div>`;
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            const lastMessage = chatHistory.lastElementChild;
-            lastMessage.innerHTML = `The AI has generated some amazing code for you! 🤖`;
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-        });
-    }
-
-    async function renderSettingsPage() {
-        appContainer.innerHTML = `
-            <div class="floating-container fullscreen-container">
-                <main class="page-content settings-page">
-                    <header class="page-header">
-                        <h2>Settings</h2>
-                    </header>
-                    <div class="settings-list">
-                        <div class="setting-item">
-                            <span>Theme</span>
-                            <button class="settings-action-btn">Dark</button>
+        if (state.currentView === 'files') {
+            const files = await window.db.getAllItems('files');
+            const fileListHtml = files.map(file => {
+                const fileType = window.fileEngine.getFileType(file.name);
+                const fileIconClass = window.fileEngine.getFileIconClass(fileType);
+                return `
+                    <div class="file-item" data-id="${file.id}" data-type="file">
+                        <div class="file-icon-bg ${fileIconClass}">
+                            <svg>${window.fileEngine.getIconSvg(fileType)}</svg>
                         </div>
-                        <div class="setting-item">
-                            <span>Font Size</span>
-                            <button class="settings-action-btn">16px</button>
+                        <div class="file-info">
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-date">Last modified: ${new Date(file.timestamp).toLocaleString()}</span>
                         </div>
-                        <div class="setting-item">
-                            <span>About</span>
-                            <button class="settings-action-btn">View</button>
+                        <div class="file-actions">
+                            <button class="nav-btn dropdown-trigger">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/></svg>
+                            </button>
                         </div>
                     </div>
-                </main>
-            </div>
-        `;
-    }
-
-    async function renderFileExplorerPage() {
-        const files = await window.db.getAllItems('files');
-        const fileListHtml = files.map(file => {
-            const fileType = window.fileEngine.getFileType(file.name);
-            const iconSvg = window.fileEngine.getIconSvg(fileType);
-            return `
-                <a href="#" class="file-item" data-file-id="${file.id}">
-                    <div class="file-icon-container">
-                        <div class="file-icon-bg ${fileType}">
-                            ${iconSvg}
-                        </div>
-                    </div>
-                    <div class="file-info">
-                        <span class="file-name">${file.name}</span>
-                        <span class="file-date">Last modified: ${new Date(file.timestamp).toLocaleString()}</span>
-                    </div>
-                </a>
-            `;
-        }).join('');
-
-        appContainer.innerHTML = `
-            <div class="floating-container fullscreen-container">
-                <main class="page-content file-explorer-page">
-                    <header class="page-header">
-                        <h2>Files</h2>
-                        <button class="nav-btn dropdown-trigger" id="file-menu-btn">
-                             ${getIconSvg('options')}
-                        </button>
-                    </header>
-                    <div class="file-list scrollable-content">
-                        ${fileListHtml || '<p class="no-files">No files found. Tap the "New" button to create one.</p>'}
-                    </div>
-                </main>
-            </div>
-        `;
-        document.querySelectorAll('.file-item').forEach(item => {
-            item.addEventListener('click', async (e) => {
-                e.preventDefault();
-                const fileId = parseInt(item.dataset.fileId);
-                const file = await window.db.getItemById('files', fileId);
-                if (file) {
-                    renderPage('editor', { file });
-                } else {
-                    alert('File not found.');
-                }
-            });
-        });
-        
-        const fileMenuBtn = document.getElementById('file-menu-btn');
-        fileMenuBtn.addEventListener('click', (e) => {
-            const existingMenu = document.querySelector('.dropdown-menu');
-            if (existingMenu) {
-                existingMenu.remove();
-                return;
-            }
-
-            const menu = document.createElement('div');
-            menu.className = 'dropdown-menu';
-            menu.innerHTML = `
-                <button data-action="new-file">${getIconSvg('newFile')} New File</button>
-                <button data-action="new-repo">${getIconSvg('repository')} New Repo</button>
-            `;
-            menu.style.top = `${e.currentTarget.offsetTop + e.currentTarget.offsetHeight + 10}px`;
-            menu.style.right = '20px';
-            document.body.appendChild(menu);
-
-            menu.querySelectorAll('button').forEach(btn => {
-                btn.addEventListener('click', (event) => {
-                    const action = event.currentTarget.dataset.action;
-                    if (action === 'new-file') {
-                        showModal('input', { type: 'file' });
-                    } else if (action === 'new-repo') {
-                        showModal('input', { type: 'repo' });
+                `;
+            }).join('');
+            mainContent.innerHTML = fileListHtml || '<div class="no-items">No files found. Tap the "plus" button to create one.</div>';
+            mainContent.querySelectorAll('.file-item').forEach(item => {
+                item.addEventListener('click', async (e) => {
+                    const id = parseInt(item.dataset.id);
+                    const file = await window.db.getItemById('files', id);
+                    if (file) {
+                        viewManager.push('editor', { file });
                     }
-                    menu.remove();
                 });
             });
-
-            document.addEventListener('click', (closeEvent) => {
-                if (!menu.contains(closeEvent.target) && !fileMenuBtn.contains(closeEvent.target)) {
-                    menu.remove();
-                }
-            }, { once: true });
-        });
+        } else if (state.currentView === 'repositories') {
+            const repos = await window.db.getAllItems('repositories');
+            const repoListHtml = repos.map(repo => `
+                <div class="file-item" data-id="${repo.id}" data-type="repo">
+                    <div class="file-icon-bg repo-bg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15.5l-5-5 1.41-1.41L11 15.68l6.59-6.59L19 10.5l-8 8z"/></svg>
+                    </div>
+                    <div class="file-info">
+                        <span class="file-name">${repo.name}</span>
+                        <span class="file-date">Last modified: ${new Date(repo.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div class="file-actions">
+                         <button class="nav-btn dropdown-trigger">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            mainContent.innerHTML = repoListHtml || '<div class="no-items">No repositories found. Create one to get started!</div>';
+        }
     }
 
-    function renderCodeEditorPage(data) {
+    async function renderCodeEditorPage(data) {
+        document.querySelector('.app-header').classList.remove('hidden');
+        document.querySelector('.home-header').classList.add('hidden');
         const file = data.file || { name: 'untitled', content: '' };
+        
+        const fileType = window.fileEngine.getFileType(file.name);
+        const fileIconClass = window.fileEngine.getFileIconClass(fileType);
 
         appContainer.innerHTML = `
-            <div class="floating-container fullscreen-container">
-                <main class="page-content code-editor-page">
-                    <header class="page-header editor-header">
-                        <div class="header-buttons left">
-                            <button class="nav-btn" id="editor-back-btn">
-                                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                                    <polyline points="12 19 5 12 12 5"></polyline>
-                                </svg>
-                            </button>
+            <div class="code-editor-page">
+                <header class="page-header editor-header">
+                    <button id="editor-back-btn" class="nav-btn back-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                    </button>
+                    <div class="header-file-info">
+                        <div class="file-icon-bg ${fileIconClass} mini-icon">
+                            <svg>${window.fileEngine.getIconSvg(fileType)}</svg>
                         </div>
                         <h2 class="header-title">${file.name}</h2>
-                        <div class="header-buttons right">
-                            <button class="nav-btn dropdown-trigger" id="editor-file-menu">
-                                ${getIconSvg('options')}
-                            </button>
-                        </div>
-                    </header>
-                    <div class="code-editor-container scrollable-content">
-                        <div class="line-numbers"></div>
-                        <textarea id="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
-                        <pre class="syntax-highlighting-layer" aria-hidden="true"></pre>
                     </div>
-                </main>
+                    <div class="header-buttons right">
+                        <button class="nav-btn dropdown-trigger" id="editor-file-menu">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/></svg>
+                        </button>
+                    </div>
+                </header>
+                <div class="code-editor-container">
+                    <div class="line-numbers"></div>
+                    <textarea id="code-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+                    <pre class="syntax-highlighting-layer" aria-hidden="true"></pre>
+                </div>
             </div>
         `;
 
-        document.getElementById('editor-back-btn').addEventListener('click', () => renderPage('explore'));
+        document.getElementById('editor-back-btn').addEventListener('click', () => viewManager.pop());
 
         const editor = document.getElementById('code-editor');
         const lineNumbers = document.querySelector('.line-numbers');
@@ -369,10 +314,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         editor.value = codeContent;
 
         const updateLineNumbers = () => {
-            const lineCount = editor.value.split('\n').length;
-            lineNumbers.innerHTML = Array.from({ length: lineCount }, (_, i) => `<div>${i + 1}</div>`).join('');
+            const lines = editor.value.split('\n');
+            const lineCount = lines.length;
+            const numbers = Array.from({ length: lineCount }, (_, i) => `<div>${i + 1}</div>`).join('');
+            lineNumbers.innerHTML = numbers;
         };
-        
+
         const updateSyntaxHighlighting = () => {
             const highlightedCode = window.fileEngine.highlightCode(editor.value, file.name);
             highlighter.innerHTML = highlightedCode;
@@ -391,7 +338,47 @@ document.addEventListener('DOMContentLoaded', async () => {
             highlighter.scrollTop = editor.scrollTop;
         });
 
+        // Basic bracket matching and auto-indent
+        editor.addEventListener('keydown', (e) => {
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+
+            // Auto-indent on Enter
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const currentLine = text.substring(0, start).split('\n').pop();
+                const indent = currentLine.match(/^\s*/)[0];
+                const newText = text.substring(0, start) + '\n' + indent + text.substring(end);
+                editor.value = newText;
+                editor.selectionStart = editor.selectionEnd = start + indent.length + 1;
+                updateEditor();
+                return;
+            }
+
+            // Auto-close brackets/quotes
+            const pairs = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
+            const key = e.key;
+            if (pairs[key]) {
+                const newText = text.substring(0, start) + key + pairs[key] + text.substring(end);
+                editor.value = newText;
+                editor.selectionStart = editor.selectionEnd = start + 1;
+                updateEditor();
+                e.preventDefault();
+            }
+        });
+
         updateEditor();
+
+        // Save file on editor blur or every 5 seconds
+        let saveTimeout = null;
+        editor.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(async () => {
+                await window.db.updateItem('files', file.id, { content: editor.value });
+                console.log('Autosaved.');
+            }, 5000);
+        });
 
         const fileMenuBtn = document.getElementById('editor-file-menu');
         fileMenuBtn.addEventListener('click', (e) => {
@@ -404,10 +391,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const menu = document.createElement('div');
             menu.className = 'dropdown-menu';
             menu.innerHTML = `
-                <button data-action="save">${getIconSvg('save')} Save</button>
-                <button data-action="download">${getIconSvg('download')} Download</button>
-                <button data-action="share">${getIconSvg('share')} Share</button>
-                <button data-action="copy">${getIconSvg('copy')} Copy All</button>
+                <button data-action="save">Save</button>
+                <button data-action="download">Download</button>
+                <button data-action="copy">Copy All</button>
             `;
             menu.style.top = `${e.currentTarget.offsetTop + e.currentTarget.offsetHeight + 10}px`;
             menu.style.right = '20px';
@@ -425,9 +411,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 break;
                             case 'download':
                                 window.fileEngine.downloadFile(file.name, content);
-                                break;
-                            case 'share':
-                                window.fileEngine.shareFile(file.name, content);
                                 break;
                             case 'copy':
                                 await navigator.clipboard.writeText(content);
@@ -483,60 +466,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             confirmBtn.disabled = true;
         }, 300);
     }
-
-    createNewFileBtn.addEventListener('click', () => {
-        showModal('input', { type: 'file' });
-        filenameInput.disabled = false;
-        filenameInput.focus();
-    });
-
-    newRepoBtn.addEventListener('click', () => {
-        showModal('input', { type: 'repo' });
-        filenameInput.disabled = false;
-        filenameInput.focus();
-    });
-
-    cancelBtn.addEventListener('click', () => {
-        hideModal();
-    });
-
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal || e.target.id === 'cancel-btn') {
-            hideModal();
-        }
-    });
-
-    filenameInput.addEventListener('input', () => {
-        if (filenameInput.value.trim().length > 0) {
-            confirmBtn.classList.add('enabled');
-            confirmBtn.disabled = false;
-        } else {
-            confirmBtn.classList.remove('enabled');
-            confirmBtn.disabled = true;
-        }
-    });
-
-    confirmBtn.addEventListener('click', async () => {
-        const name = filenameInput.value.trim();
-        if (name === '') return;
-
-        const store = filenameTitle.textContent === 'New File' ? 'files' : 'repositories';
-        const newItem = { name, timestamp: Date.now() };
-
-        try {
-            const newItemId = await window.db.addItem(store, newItem);
-            console.log(`${store === 'files' ? 'File' : 'Repository'} created:`, newItem);
-            hideModal();
-            if (store === 'files') {
-                const createdFile = await window.db.getItemById('files', newItemId);
-                renderPage('editor', { file: createdFile });
-            } else {
-                renderPage('explore');
-            }
-        } catch (e) {
-            console.error("Error creating item:", e);
-            window.logCustomError("Failed to create new item", e);
-            alert("An error occurred. Please try again.");
-        }
-    });
 });
