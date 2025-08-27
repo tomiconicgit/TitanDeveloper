@@ -11,7 +11,7 @@
 
 * {
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+    -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
@@ -39,10 +39,10 @@ main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: stretch;
     overflow-y: auto;
-    padding-bottom: 7rem;
+    padding-bottom: 7rem; /* Space for the bottom bar */
     position: relative;
     z-index: 1;
 }
@@ -168,7 +168,7 @@ main {
 .no-projects {
     text-align: center;
     color: var(--text-secondary);
-    grid-column: 1 / -1; /* Span the full grid */
+    grid-column: 1 / -1;
     margin-top: 2rem;
 }
 
@@ -180,8 +180,8 @@ main {
     width: 100%;
     background-color: rgba(10, 10, 10, 0.7);
     backdrop-filter: blur(20px);
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    display: flex;
+    justify-content: space-around;
     padding: 1rem 0;
     border-top: 1px solid var(--border-color);
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
@@ -397,7 +397,7 @@ main {
 }
 
 .file-list {
-    padding: 1rem 1.5rem;
+    padding: 1rem 0;
     flex-grow: 1;
     overflow-y: auto;
 }
@@ -405,9 +405,10 @@ main {
 .file-item {
     display: flex;
     align-items: center;
-    padding: 1rem;
+    padding: 1rem 1.5rem;
     margin-bottom: 1rem;
-    background-color: var(--bg-container);
+    background-color: rgba(28, 28, 30, 0.5);
+    backdrop-filter: blur(10px);
     border-radius: 12px;
     text-decoration: none;
     color: var(--text-primary);
@@ -433,12 +434,12 @@ main {
 .file-icon svg {
     width: 22px;
     height: 22px;
+    color: var(--text-primary);
 }
-
-.file-icon.html { background-color: #E34F26; }
-.file-icon.css { background-color: #1572B6; }
-.file-icon.js { background-color: #F7DF1E; color: #000; }
-.file-icon.default { background-color: #555; }
+.file-icon.html svg { color: #E34F26; }
+.file-icon.css svg { color: #1572B6; }
+.file-icon.js svg { color: #F7DF1E; }
+.file-icon.default svg { color: var(--text-secondary); }
 
 .file-info {
     display: flex;
@@ -462,13 +463,6 @@ main {
 }
 
 /* AI Interface */
-.container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    padding-bottom: 0;
-}
-
 .gemini-interface-container {
     display: flex;
     flex-direction: column;
