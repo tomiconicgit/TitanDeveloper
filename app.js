@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filenameInput = document.getElementById('filename');
     const confirmBtn = document.getElementById('confirm-btn');
     const cancelBtn = document.getElementById('cancel-btn');
+    const filenameTitle = document.getElementById('filename-title');
 
     // Helper function to render SVG icons
     const getIconSvg = (name) => {
@@ -28,8 +29,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return icons[name] || '';
     };
 
+    // Global state to track the active repository
+    let activeRepo = null;
+    let isCreatingRepo = false;
+
     // Function to render the home screen
-    const renderHomeScreen = () => {
+    const renderHomeScreen = async () => {
+        const repositories = await db.getAllItems('repositories');
+        const recentProjectsHtml = repositories.map(repo => `
+            <a href="#" class="project-card" data-repo-id="${repo.id}">
+                <div class="project-icon">${getIconSvg('repository')}</div>
+                <span class="project-title">${repo.name}</span>
+                <span class="project-date">Last modified: ${new Date(repo.lastModified).toLocaleString()}</span>
+            </a>
+        `).join('');
+
         appContainer.innerHTML = `
             <main>
                 <div class="logo">
@@ -42,16 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <a href="#">View All</a>
                 </div>
                 <div class="recent-projects-grid">
-                    <a href="#" class="project-card">
-                        <div class="project-icon">${getIconSvg('fileExplorer')}</div>
-                        <span class="project-title">My-First-App</span>
-                        <span class="project-date">2 days ago</span>
-                    </a>
-                    <a href="#" class="project-card">
-                        <div class="project-icon">${getIconSvg('repository')}</div>
-                        <span class="project-title">Landing-Page-V2</span>
-                        <span class="project-date">1 hour ago</span>
-                    </a>
+                    ${recentProjectsHtml || `<p style="text-align: center; color: var(--text-secondary); padding-top: 2rem;">No repositories found.</p>`}
                 </div>
 
                 <div class="command-bar">
@@ -85,7 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('new-file-btn').addEventListener('click', (e) => {
             e.preventDefault();
-            showModal();
+            isCreatingRepo = false;
+            showModal('Create New File');
         });
 
         document.getElementById('open-file-btn').addEventListener('click', (e) => {
@@ -105,17 +111,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('ai-btn').addEventListener('click', (e) => {
             e.preventDefault();
-            renderGeminiInterface();
+            renderTitanAIInterface();
         });
 
         document.getElementById('settings-btn').addEventListener('click', (e) => {
             e.preventDefault();
             alert("Settings functionality is not yet implemented.");
         });
+
+        document.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const repoId = parseInt(card.dataset.repoId);
+                const repositories = await db.getAllItems('repositories');
+                activeRepo = repositories.find(repo => repo.id === repoId);
+                if (activeRepo) {
+                    renderFileExplorer();
+                }
+            });
+        });
     };
 
     // Function to render the file explorer page
-    const renderFileExplorer = () => {
+    const renderFileExplorer = async () => {
+        if (!activeRepo) {
+            appContainer.innerHTML = `<div class="container"><p style="text-align: center; color: var(--text-secondary); padding-top: 2rem;">No active repository. Please create or open one from the home screen.</p></div>`;
+            return;
+        }
+        
+        const files = await db.getAllItems('files');
+        const activeRepoFiles = files.filter(file => file.repoId === activeRepo.id);
+
+        const fileListHtml = activeRepoFiles.map(file => {
+            const fileExtension = file.name.split('.').pop();
+            let iconClass = 'file-icon';
+            if (fileExtension === 'html') iconClass += ' html';
+            if (fileExtension === 'css') iconClass += ' css';
+            if (fileExtension === 'js') iconClass += ' js';
+
+            return `
+                <div class="file-item">
+                    <div class="${iconClass}">
+                        ${getIconSvg(fileExtension === 'html' ? 'html' : fileExtension === 'css' ? 'css' : fileExtension === 'js' ? 'js' : 'newFile')}
+                    </div>
+                    <div class="file-info">
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-date">Last modified: ${new Date(file.lastModified).toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
         appContainer.innerHTML = `
             <div class="container">
                 <header class="file-explorer-header">
@@ -127,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </svg>
                         </button>
                     </div>
-                    <h2 class="header-title">Files</h2>
+                    <h2 class="header-title">${activeRepo.name}</h2>
                     <div class="header-buttons right">
                         <button class="nav-btn">
                             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -145,52 +191,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </header>
                 <div class="file-list">
-                    <div class="file-item">
-                        <div class="file-icon html">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <path d="M10 16.5L14 12l-4-4"></path>
-                            </svg>
-                        </div>
-                        <div class="file-info">
-                            <span class="file-name">index.html</span>
-                            <span class="file-date">Last modified: 3m ago</span>
-                        </div>
-                    </div>
-                    <div class="file-item">
-                        <div class="file-icon css">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <path d="M12 17.5l-2-2m4-2l-2-2"></path>
-                            </svg>
-                        </div>
-                        <div class="file-info">
-                            <span class="file-name">styles.css</span>
-                            <span class="file-date">Last modified: 1h ago</span>
-                        </div>
-                    </div>
-                    <div class="file-item">
-                        <div class="file-icon js">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <path d="M10 16.5L14 12l-4-4"></path>
-                            </svg>
-                        </div>
-                        <div class="file-info">
-                            <span class="file-name">app.js</span>
-                            <span class="file-date">Last modified: 2h ago</span>
-                        </div>
-                    </div>
+                    ${fileListHtml || `<p style="text-align: center; color: var(--text-secondary); padding-top: 2rem;">This repository is empty.</p>`}
                 </div>
             </div>
         `;
         document.getElementById('back-btn').addEventListener('click', renderHomeScreen);
     };
 
-    const renderRepositoryExplorer = () => {
+    const renderRepositoryExplorer = async () => {
+        const repositories = await db.getAllItems('repositories');
+        const repoListHtml = repositories.map(repo => `
+            <a href="#" class="file-item repo-item" data-repo-id="${repo.id}">
+                <div class="file-icon folder">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <div class="file-info">
+                    <span class="file-name">${repo.name}</span>
+                    <span class="file-date">Last modified: ${new Date(repo.lastModified).toLocaleString()}</span>
+                </div>
+            </a>
+        `).join('');
+
         appContainer.innerHTML = `
             <div class="container">
                 <header class="file-explorer-header">
@@ -220,12 +243,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </header>
                 <div class="file-list">
-                    <p style="text-align: center; color: var(--text-secondary); padding-top: 2rem;">No repositories found. Tap the "New File" button to create one.</p>
+                    ${repoListHtml || `<p style="text-align: center; color: var(--text-secondary); padding-top: 2rem;">No repositories found. Tap the "New Repository" button to create one.</p>`}
                 </div>
             </div>
         `;
         document.getElementById('back-btn').addEventListener('click', renderHomeScreen);
-    }
+        document.querySelectorAll('.repo-item').forEach(item => {
+            item.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const repoId = parseInt(item.dataset.repoId);
+                const repositories = await db.getAllItems('repositories');
+                activeRepo = repositories.find(repo => repo.id === repoId);
+                if (activeRepo) {
+                    renderFileExplorer();
+                }
+            });
+        });
+    };
     
     // Function to add a message to the chat history
     const addChatMessage = (message, sender) => {
@@ -239,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const renderGeminiInterface = () => {
+    const renderTitanAIInterface = () => {
         appContainer.innerHTML = `
             <div class="container">
                 <header class="file-explorer-header">
@@ -251,17 +285,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             </svg>
                         </button>
                     </div>
-                    <h2 class="header-title">AI Assistant</h2>
+                    <h2 class="header-title">Titan AI</h2>
                 </header>
                 <div class="gemini-interface-container">
                     <div class="chat-history">
-                        <div class="chat-message gemini-message">
-                            <p>Hi! I'm an AI assistant. How can I assist you with your project today?</p>
+                        <div class="chat-message titan-ai-message">
+                            <p>Hi! I'm Titan AI. I'm a PWA-building assistant. I can analyze your files and help you write code. What can I help you with today?</p>
                         </div>
                     </div>
                     <div class="input-area">
-                        <textarea id="gemini-prompt-input" placeholder="Type your request here..."></textarea>
-                        <button id="gemini-send-btn">${getIconSvg('ai')}</button>
+                        <textarea id="titan-ai-prompt-input" placeholder="Type your request here..."></textarea>
+                        <button id="titan-ai-send-btn">${getIconSvg('ai')}</button>
                     </div>
                 </div>
             </div>
@@ -269,39 +303,46 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('back-btn').addEventListener('click', renderHomeScreen);
         
-        // NEW: Add the event listener for the new Gemini button
-        const geminiPromptInput = document.getElementById('gemini-prompt-input');
-        const geminiSendBtn = document.getElementById('gemini-send-btn');
+        const titanAIPromptInput = document.getElementById('titan-ai-prompt-input');
+        const titanAISendBtn = document.getElementById('titan-ai-send-btn');
 
-        if (geminiSendBtn && geminiPromptInput) {
-            geminiSendBtn.addEventListener('click', async () => {
-                const userPrompt = geminiPromptInput.value.trim();
+        if (titanAISendBtn && titanAIPromptInput) {
+            titanAISendBtn.addEventListener('click', async () => {
+                const userPrompt = titanAIPromptInput.value.trim();
 
                 if (userPrompt) {
-                    // Add user message to chat history and clear input
                     addChatMessage(userPrompt, 'user');
-                    geminiPromptInput.value = '';
+                    titanAIPromptInput.value = '';
 
-                    geminiSendBtn.disabled = true;
-                    geminiSendBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="loading-spinner"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`;
+                    titanAISendBtn.disabled = true;
+                    titanAISendBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="loading-spinner"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`;
 
-                    const responseData = await callGemini({ prompt: userPrompt });
+                    // Fetch all files from the active repository to send to the AI
+                    const allFiles = activeRepo ? await db.getAllItems('files') : [];
+                    const filesInRepo = allFiles.filter(file => file.repoId === activeRepo.id);
+                    const fileContent = filesInRepo.map(file => ({ name: file.name, content: file.content }));
+                    
+                    const responseData = await callTitanAI({ 
+                        prompt: userPrompt,
+                        repoFiles: fileContent,
+                    });
 
                     if (responseData) {
-                        addChatMessage(responseData.message, 'gemini');
+                        addChatMessage(responseData.message, 'titan-ai');
                     } else {
-                        addChatMessage('An error occurred. Please try again.', 'gemini');
+                        addChatMessage('An error occurred. Please try again.', 'titan-ai');
                     }
 
-                    geminiSendBtn.disabled = false;
-                    geminiSendBtn.innerHTML = getIconSvg('ai');
+                    titanAISendBtn.disabled = false;
+                    titanAISendBtn.innerHTML = getIconSvg('ai');
                 }
             });
         }
     };
     
-    // Modal functions (remains the same)
-    const showModal = () => {
+    // Modal functions
+    const showModal = (title) => {
+        filenameTitle.textContent = title;
         modal.classList.remove('hidden');
         setTimeout(() => {
             modal.classList.add('show');
@@ -324,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     createNewFileBtn.addEventListener('click', () => {
+        isCreatingRepo = false;
         optionsContainer.classList.add('hidden');
         inputSection.classList.remove('hidden');
         filenameInput.disabled = false;
@@ -331,6 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     newRepoBtn.addEventListener('click', () => {
+        isCreatingRepo = true;
         optionsContainer.classList.add('hidden');
         inputSection.classList.remove('hidden');
         filenameInput.disabled = false;
@@ -357,12 +400,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    confirmBtn.addEventListener('click', () => {
+    confirmBtn.addEventListener('click', async () => {
         if (!confirmBtn.disabled) {
-            const fileName = filenameInput.value.trim();
-            if (fileName) {
-                console.log(`Creating: ${fileName}`);
-                alert(`Creating: ${fileName}`);
+            const name = filenameInput.value.trim();
+            if (name) {
+                if (isCreatingRepo) {
+                    const newRepo = { name: name, lastModified: new Date() };
+                    const repoId = await db.addItem('repositories', newRepo);
+                    activeRepo = { id: repoId, ...newRepo };
+                    alert(`Repository '${name}' created!`);
+                    renderHomeScreen();
+                } else {
+                    if (!activeRepo) {
+                        alert("Please create a repository first.");
+                        return;
+                    }
+                    const newFile = {
+                        name: name,
+                        content: '', // Start with empty content
+                        repoId: activeRepo.id,
+                        lastModified: new Date()
+                    };
+                    await db.addItem('files', newFile);
+                    alert(`File '${name}' created in '${activeRepo.name}'!`);
+                    renderFileExplorer();
+                }
                 hideModal();
             }
         }
@@ -373,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // -----------------------------
     const GEMINI_WORKER_URL = 'https://titandeveloper.pjksgnkzt7-cf9.workers.dev';
 
-    async function callGemini(payload) {
+    async function callTitanAI(payload) {
         try {
             const response = await fetch(GEMINI_WORKER_URL, {
                 method: 'POST',
@@ -385,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(`Worker error: ${response.statusText}`);
             return await response.json();
         } catch (err) {
-            console.error('Gemini Worker call failed:', err);
+            console.error('Titan AI Worker call failed:', err);
             return null;
         }
     }
