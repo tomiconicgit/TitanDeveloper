@@ -1,3 +1,7 @@
+/*
+File: /db.js
+*/
+
 // A simple IndexedDB wrapper for persistent storage.
 
 const DB_NAME = 'TitanDeveloperDB';
