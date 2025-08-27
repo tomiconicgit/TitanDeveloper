@@ -3,7 +3,7 @@ File: /db.js
 */
 
 const DB_NAME = 'TitanDeveloperDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4; // Incremented for schema changes
 const STORES = { files: 'files', repositories: 'repositories' };
 
 let dbInstance;
@@ -21,14 +21,18 @@ async function initDB() {
                 fileStore.createIndex('type', 'type', { unique: false });
             }
             if (!db.objectStoreNames.contains(STORES.repositories)) {
-                db.createObjectStore(STORES.repositories, { keyPath: 'id', autoIncrement: true });
+                const repoStore = db.createObjectStore(STORES.repositories, { keyPath: 'id', autoIncrement: true });
+                repoStore.createIndex('timestamp', 'timestamp', { unique: false });
             }
         };
         request.onsuccess = () => {
             dbInstance = event.target.result;
             resolve(dbInstance);
         };
-        request.onerror = () => reject(event.target.error);
+        request.onerror = () => {
+            window.logCustomError("IndexedDB initialization failed", event.target.error);
+            reject(event.target.error);
+        };
     });
 }
 
@@ -39,7 +43,10 @@ async function addItem(storeName, item) {
     return new Promise((resolve, reject) => {
         const request = store.add({ ...item, timestamp: Date.now() });
         request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
+        request.onerror = () => {
+            window.logCustomError("Failed to add item", request.error);
+            reject(request.error);
+        };
     });
 }
 
@@ -50,7 +57,10 @@ async function getItemById(storeName, id) {
     return new Promise((resolve, reject) => {
         const request = store.get(id);
         request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
+        request.onerror = () => {
+            window.logCustomError("Failed to get item", request.error);
+            reject(request.error);
+        };
     });
 }
 
@@ -61,7 +71,10 @@ async function getAllItems(storeName) {
     return new Promise((resolve, reject) => {
         const request = store.getAll();
         request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
+        request.onerror = () => {
+            window.logCustomError("Failed to get all items", request.error);
+            reject(request.error);
+        };
     });
 }
 
@@ -70,11 +83,17 @@ async function updateItem(storeName, id, updates) {
     const tx = dbInstance.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
     const item = await getItemById(storeName, id);
-    if (!item) throw new Error('Item not found');
+    if (!item) {
+        window.logCustomError("Item not found for update", { id, storeName });
+        throw new Error('Item not found');
+    }
     return new Promise((resolve, reject) => {
         const request = store.put({ ...item, ...updates, timestamp: Date.now() });
         request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
+        request.onerror = () => {
+            window.logCustomError("Failed to update item", request.error);
+            reject(request.error);
+        };
     });
 }
 
@@ -85,7 +104,10 @@ async function deleteItem(storeName, id) {
     return new Promise((resolve, reject) => {
         const request = store.delete(id);
         request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
+        request.onerror = () => {
+            window.logCustomError("Failed to delete item", request.error);
+            reject(request.error);
+        };
     });
 }
 
