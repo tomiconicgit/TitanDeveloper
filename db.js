@@ -5,15 +5,10 @@ const STORES = {
     repositories: 'repositories'
 };
 
-let db;
+let dbInstance;
 
-function openDB() {
+async function initDB() {
     return new Promise((resolve, reject) => {
-        if (db) {
-            resolve(db);
-            return;
-        }
-
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onupgradeneeded = (event) => {
@@ -27,8 +22,8 @@ function openDB() {
         };
 
         request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve(db);
+            dbInstance = event.target.result;
+            resolve(dbInstance);
         };
 
         request.onerror = (event) => {
@@ -39,8 +34,8 @@ function openDB() {
 }
 
 async function addItem(storeName, item) {
-    const db = await openDB();
-    const tx = db.transaction(storeName, 'readwrite');
+    if (!dbInstance) await initDB();
+    const tx = dbInstance.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
     return new Promise((resolve, reject) => {
         const request = store.add(item);
@@ -50,8 +45,8 @@ async function addItem(storeName, item) {
 }
 
 async function getAllItems(storeName) {
-    const db = await openDB();
-    const tx = db.transaction(storeName, 'readonly');
+    if (!dbInstance) await initDB();
+    const tx = dbInstance.transaction(storeName, 'readonly');
     const store = tx.objectStore(storeName);
     return new Promise((resolve, reject) => {
         const request = store.getAll();
@@ -60,10 +55,9 @@ async function getAllItems(storeName) {
     });
 }
 
-// Additional functions for updating and deleting items will be needed later.
-// For now, this is enough to get started.
-
 window.db = {
     addItem,
     getAllItems,
 };
+
+window.db.ready = initDB();
