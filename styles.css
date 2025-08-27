@@ -403,7 +403,7 @@ main {
     border-bottom-right-radius: 4px;
 }
 
-.gemini-message {
+.titan-ai-message {
     background-color: var(--bg-container);
     color: var(--text-primary);
     align-self: flex-start;
@@ -420,7 +420,7 @@ main {
     border-top: 1px solid var(--border-color);
 }
 
-#gemini-prompt-input {
+#titan-ai-prompt-input {
     flex-grow: 1;
     min-height: 48px;
     max-height: 120px;
@@ -436,15 +436,15 @@ main {
     transition: border-color 0.2s ease;
 }
 
-#gemini-prompt-input:focus {
+#titan-ai-prompt-input:focus {
     border-color: var(--accent);
 }
 
-#gemini-prompt-input::placeholder {
+#titan-ai-prompt-input::placeholder {
     color: var(--text-secondary);
 }
 
-#gemini-send-btn {
+#titan-ai-send-btn {
     padding: 0.75rem;
     border-radius: 8px;
     background-color: var(--accent);
@@ -454,7 +454,7 @@ main {
     transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 
-#gemini-send-btn svg {
+#titan-ai-send-btn svg {
     width: 24px;
     height: 24px;
 }
