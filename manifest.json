@@ -1,7 +1,11 @@
+/*
+File: /manifest.json
+*/
+
 {
-    "name": "Titan IDE",
-    "short_name": "Titan IDE",
-    "description": "A Progressive Web App for Titan IDE",
+    "name": "Titan Developer",
+    "short_name": "Titan Dev",
+    "description": "A sovereign, offline-first coding IDE PWA.",
     "start_url": "/index.html?nocache=true",
     "display": "standalone",
     "background_color": "#0C0C0C",
