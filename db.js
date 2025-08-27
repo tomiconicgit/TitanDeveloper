@@ -1,3 +1,5 @@
+// A simple IndexedDB wrapper for persistent storage.
+
 const DB_NAME = 'TitanDeveloperDB';
 const DB_VERSION = 1;
 const STORES = {
