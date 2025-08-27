@@ -65,7 +65,7 @@ body {
 
 #app-container {
     padding: 1rem;
-    height: 100vh;
+    height: calc(100vh - 3rem);
     overflow-y: hidden;
 }
 
@@ -209,6 +209,19 @@ body {
 .file-icon-bg.repo-bg, .file-icon-bg.folder-bg {
     background-color: var(--file-color-folder);
 }
+
+.file-icon-bg.html { background-color: var(--file-color-html); }
+.file-icon-bg.css { background-color: var(--file-color-css); }
+.file-icon-bg.js { background-color: var(--file-color-js); }
+.file-icon-bg.json { background-color: var(--file-color-json); }
+.file-icon-bg.yaml { background-color: var(--file-color-yaml); }
+.file-icon-bg.md { background-color: var(--file-color-md); }
+.file-icon-bg.ts { background-color: var(--file-color-ts); }
+.file-icon-bg.jsx { background-color: var(--file-color-jsx); }
+.file-icon-bg.vue { background-color: var(--file-color-vue); }
+.file-icon-bg.scss { background-color: var(--file-color-scss); }
+.file-icon-bg.svg { background-color: var(--file-color-svg); }
+.file-icon-bg.default { background-color: var(--file-color-default); }
 
 .file-info {
     flex-grow: 1;
@@ -507,8 +520,15 @@ body {
     top: 0;
 }
 
-.error-state {
-    text-align: center;
-    padding: 2rem;
-    color: var(--text-secondary);
+.error-display {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #721c24;
+    color: #f8d7da;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow-dark);
+    z-index: 2000;
+    max-width: 300px;
 }
