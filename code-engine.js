@@ -78,7 +78,6 @@ File: /code-engine.js
             strings: /("|')([^"']*)("|')/g,
             comments: /()/g,
         },
-        // Add more languages as needed
     };
 
     const getFileType = (fileName) => {
@@ -155,5 +154,4 @@ File: /code-engine.js
         getFileIconClass,
         downloadFile,
     };
-
 })();
