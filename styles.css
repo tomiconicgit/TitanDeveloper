@@ -10,9 +10,9 @@ File: /styles.css
     --bg-pill: rgba(50, 50, 50, 0.8); /* Subtle pill background */
     --text-primary: #FFFFFF; /* Crisp white text */
     --text-secondary: #A0A0A0; /* Softer secondary text */
-    --accent: #00D4FF; /* Vibrant cyan accent (iOS 26-inspired) */
-    --accent-dark: #00A3CC; /* Darker accent for hover/active */
-    --accent-gradient: linear-gradient(45deg, #00D4FF, #00A3CC); /* Smooth gradient */
+    --accent: #1DA1F2; /* Grok/X blue accent */
+    --accent-dark: #0A85C9; /* Darker blue for hover/active */
+    --accent-gradient: linear-gradient(45deg, #1DA1F2, #0A85C9); /* Smooth gradient */
     --border-color: rgba(255, 255, 255, 0.1); /* Subtle borders */
     --shadow-light: rgba(0, 0, 0, 0.2); /* Lighter shadows */
     --shadow-dark: rgba(0, 0, 0, 0.4); /* Subtle dark shadows */
@@ -374,40 +374,14 @@ body {
 
 /* Modal */
 .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0s 0.3s;
-    z-index: 2000;
-}
-
-.modal.show {
-    opacity: 1;
-    visibility: visible;
     transition: opacity 0.3s ease;
 }
 
 .modal-content {
     background-color: var(--bg-container);
-    width: 100%;
-    max-width: 600px;
     border-radius: 16px 16px 0 0;
     padding: 1.5rem;
-    box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.4);
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1.2);
-}
-
-.modal.show .modal-content {
-    transform: translateY(0);
 }
 
 #options-container, #input-section {
@@ -468,7 +442,7 @@ body {
 
 #input-section input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+    box-shadow: 0 0 0 2px rgba(29, 161, 242, 0.2); /* Updated to blue */
 }
 
 .button-group {
