@@ -26,9 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filenameTitle = document.getElementById('filename-title');
     const newFileBtn = document.getElementById('create-new-file-btn');
     const newRepoBtn = document.getElementById('new-repo-btn');
-    const navPill = document.getElementById('nav-pill');
-    const navPillFiles = document.getElementById('nav-pill-files');
-    const navPillRepos = document.getElementById('nav-pill-repos');
 
     // State object to manage app-wide variables
     const state = {
@@ -59,23 +56,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // --- Event Listeners & Router ---
-    navPillFiles.addEventListener('click', () => {
-        state.currentView = 'files';
-        updateNavPill();
-        renderMainContent();
-    });
+    // The event listeners for the nav pills have been moved to the renderHomePage function
+    // to ensure the elements exist when the listeners are attached.
 
-    navPillRepos.addEventListener('click', () => {
-        state.currentView = 'repositories';
-        updateNavPill();
-        renderMainContent();
-    });
-
-    document.getElementById('back-button').addEventListener('click', () => {
+    document.getElementById('back-button')?.addEventListener('click', () => {
         viewManager.pop();
     });
 
-    document.getElementById('new-item-button').addEventListener('click', () => {
+    document.getElementById('new-item-button')?.addEventListener('click', () => {
         showModal('options');
     });
 
@@ -166,6 +154,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function updateNavPill() {
+        const navPill = document.getElementById('nav-pill');
+        const navPillFiles = document.getElementById('nav-pill-files');
+        const navPillRepos = document.getElementById('nav-pill-repos');
+
+        if (!navPill || !navPillFiles || !navPillRepos) {
+            console.warn("Nav pill elements not found. Skipping update.");
+            return;
+        }
+
         if (state.currentView === 'files') {
             navPill.style.transform = 'translateX(0)';
             navPillFiles.classList.add('active');
@@ -178,8 +175,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function renderHomePage() {
-        document.querySelector('.app-header').classList.add('hidden');
-        document.querySelector('.home-header').classList.remove('hidden');
+        // Since we are re-rendering the entire appContainer, we need to
+        // make sure we remove and re-attach listeners for the new elements.
+        // The previous attempt to get the elements at the top of the file failed.
+        
+        document.querySelector('.app-header')?.classList.add('hidden');
+        document.querySelector('.home-header')?.classList.remove('hidden');
 
         appContainer.innerHTML = `
             <div class="main-content-container">
@@ -196,6 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div id="main-content" class="scrollable-content"></div>
             </div>
         `;
+        // ATTACH LISTENERS HERE AFTER THE ELEMENTS ARE CREATED
         document.getElementById('nav-pill-files').addEventListener('click', () => {
             state.currentView = 'files';
             updateNavPill();
@@ -271,8 +273,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function renderCodeEditorPage(data) {
-        document.querySelector('.app-header').classList.remove('hidden');
-        document.querySelector('.home-header').classList.add('hidden');
+        document.querySelector('.app-header')?.classList.remove('hidden');
+        document.querySelector('.home-header')?.classList.add('hidden');
         const file = data.file || { name: 'untitled', content: '' };
         
         const fileType = window.fileEngine.getFileType(file.name);
