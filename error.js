@@ -110,7 +110,7 @@
             color: white;
             border: none;
             cursor: pointer;
-            z-index: 9999;
+            z-index: 2001; /* Updated z-index to be on top of the command bar */
             font-size: ${config.fontSize};
             font-weight: bold;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
