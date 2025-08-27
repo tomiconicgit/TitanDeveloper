@@ -26,21 +26,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filenameTitle = document.getElementById('filename-title');
     const newFileBtn = document.getElementById('create-new-file-btn');
     const newRepoBtn = document.getElementById('new-repo-btn');
+    const newFolderBtn = document.getElementById('new-folder-btn');
 
     // State object to manage app-wide variables
     const state = {
         currentPage: 'home',
         currentView: 'files',
-        isInRepo: false,
         currentRepoId: null,
-        currentParentId: null,
+        expandedFolders: new Set(),
     };
 
     // View Manager for handling page transitions and state
     const viewManager = {
         history: [{ page: 'home', data: {} }],
         push(pageName, data = {}) {
-            if (this.history[this.history.length - 1].page !== pageName || JSON.stringify(this.history[this.history.length - 1].data) !== JSON.stringify(data)) {
+            if (this.history[this.history.length - 1].page !== pageName) {
                 this.history.push({ page: pageName, data });
             }
             renderPage(pageName, data);
@@ -68,17 +68,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     newFileBtn.addEventListener('click', () => {
-        showModal('input', { type: 'file' });
+        showModal('input', { type: 'file', repoId: state.currentRepoId });
         filenameInput.disabled = false;
         filenameInput.focus();
     });
 
     newRepoBtn.addEventListener('click', () => {
-        if (state.isInRepo) {
-            showModal('input', { type: 'folder' });
-        } else {
-            showModal('input', { type: 'repo' });
-        }
+        showModal('input', { type: 'repo' });
+        filenameInput.disabled = false;
+        filenameInput.focus();
+    });
+
+    newFolderBtn.addEventListener('click', () => {
+        showModal('input', { type: 'folder', repoId: state.currentRepoId });
         filenameInput.disabled = false;
         filenameInput.focus();
     });
@@ -107,51 +109,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         const name = filenameInput.value.trim();
         if (name === '') return;
 
-        const title = filenameTitle.textContent;
-        if (title.startsWith('Rename')) {
-            const itemType = title.split(' ')[1].toLowerCase();
-            const store = itemType === 'repo' ? 'repositories' : 'files';
-            const updates = { name };
-            try {
-                await window.db.updateItem(store, state.currentItemId, updates);
-                hideModal();
-                refreshCurrentView();
-            } catch (e) {
-                console.error("Error renaming item:", e);
-                alert("An error occurred. Please try again.");
-            }
-            return;
-        }
-
-        const itemType = title.replace('New ', '').toLowerCase();
-        let store = 'files';
-        const newItem = { name };
-        if (itemType === 'repo') {
-            store = 'repositories';
-        } else {
-            newItem.type = itemType;
-            if (itemType === 'file') {
-                newItem.content = '';
-            } else {
-                newItem.content = null; // For folders
-            }
-            if (state.currentRepoId) {
-                newItem.repositoryId = state.currentRepoId;
-                if (state.currentParentId) {
-                    newItem.parentId = state.currentParentId;
-                }
-            }
+        const type = filenameTitle.textContent.toLowerCase().includes('file') ? 'file' : (filenameTitle.textContent.toLowerCase().includes('folder') ? 'folder' : 'repo');
+        const store = type === 'repo' ? 'repositories' : 'files';
+        const newItem = { name, type, content: type === 'folder' ? null : '' };
+        if (type !== 'repo' && state.currentRepoId) {
+            newItem.repositoryId = state.currentRepoId;
+            if (state.currentParentId) newItem.parentId = state.currentParentId;
         }
 
         try {
             const newItemId = await window.db.addItem(store, newItem);
-            console.log(`${itemType} created:`, newItem);
+            console.log(`${type} created:`, newItem);
             hideModal();
-            if (itemType === 'file') {
+            if (type === 'file') {
                 const createdFile = await window.db.getItemById('files', newItemId);
-                viewManager.push('editor', { file: createdFile });
+                if (state.currentRepoId) {
+                    // Refresh repo tree view
+                    const repo = await window.db.getItemById('repositories', state.currentRepoId);
+                    viewManager.push('repo-tree', { repo });
+                } else {
+                    viewManager.push('editor', { file: createdFile });
+                }
+            } else if (type === 'folder') {
+                // Refresh repo tree
+                const repo = await window.db.getItemById('repositories', state.currentRepoId);
+                viewManager.push('repo-tree', { repo });
             } else {
-                refreshCurrentView();
+                renderMainContent();
             }
         } catch (e) {
             console.error("Error creating item:", e);
@@ -168,18 +152,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize the app
     viewManager.push('home');
 
-    // Helper to refresh current view
-    function refreshCurrentView() {
-        const current = viewManager.history[viewManager.history.length - 1];
-        viewManager.push(current.page, current.data);
-    }
-
     // --- UI Rendering Functions ---
     async function renderPage(pageName, data = {}) {
         state.currentPage = pageName;
-        state.isInRepo = pageName === 'repo-tree';
-        state.currentRepoId = state.isInRepo ? data.repo.id : null;
-        state.currentParentId = state.isInRepo ? data.parentId || null : null;
+        if (pageName === 'repo-tree' && data.repo) {
+            state.currentRepoId = data.repo.id;
+        } else if (pageName !== 'repo-tree') {
+            state.currentRepoId = null;
+        }
         appContainer.innerHTML = '';
         hideModal();
 
@@ -230,7 +210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="nav-pill-container">
                         <div id="nav-pill" class="nav-pill"></div>
                         <button id="nav-pill-files" class="nav-pill-button active">Files</button>
-                        <button id="nav-pill-repos" class="nav-pill-button">Repository</button>
+                        <button id="nav-pill-repos" class="nav-pill-button">Repositories</button>
                     </div>
                     <button id="new-item-button" class="nav-btn">
                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
@@ -261,7 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (state.currentView === 'files') {
             const files = await window.db.getAllItems('files');
-            const fileListHtml = files.filter(file => !file.repositoryId && file.type !== 'folder').map(file => {
+            const fileListHtml = files.filter(file => !file.repositoryId && file.type === 'file').map(file => {
                 const fileType = window.fileEngine.getFileType(file.name);
                 const fileIconClass = window.fileEngine.getFileIconClass(fileType);
                 return `
@@ -290,12 +270,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         viewManager.push('editor', { file });
                     }
                 });
+                item.querySelector('.dropdown-trigger').addEventListener('click', (e) => showItemMenu(e, item.dataset.id, 'file'));
             });
-            attachDropdownListeners(mainContent);
         } else if (state.currentView === 'repositories') {
             const repos = await window.db.getAllItems('repositories');
             const repoListHtml = repos.map(repo => `
-                <div class="file-item" data-id="${repo.id}" data-type="repo">
+                <div class="file-item repo-item" data-id="${repo.id}" data-type="repo">
                     <div class="file-icon-bg repo-bg">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                     </div>
@@ -311,27 +291,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `).join('');
             mainContent.innerHTML = repoListHtml || '<div class="no-items">No repositories found. Create one to get started!</div>';
-            mainContent.querySelectorAll('.file-item[data-type="repo"]').forEach(item => {
+            mainContent.querySelectorAll('.repo-item').forEach(item => {
                 item.addEventListener('click', async (e) => {
+                    if (e.target.closest('.dropdown-trigger')) return;
                     const id = parseInt(item.dataset.id);
                     const repo = await window.db.getItemById('repositories', id);
                     if (repo) {
                         viewManager.push('repo-tree', { repo });
                     }
                 });
+                item.querySelector('.dropdown-trigger').addEventListener('click', (e) => showItemMenu(e, item.dataset.id, 'repo'));
             });
-            attachDropdownListeners(mainContent, 'repo');
         }
     }
 
     async function renderRepoTreePage(data) {
         const repo = data.repo || { name: 'Unknown', id: null };
-        const parentId = data.parentId || null;
-        let title = repo.name;
-        if (parentId) {
-            const parent = await window.db.getItemById('files', parentId);
-            title += ' / ' + parent.name;
-        }
         document.querySelector('.app-header')?.classList.remove('hidden');
         document.querySelector('.home-header')?.classList.add('hidden');
 
@@ -345,7 +320,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="file-icon-bg repo-bg">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                         </div>
-                        <h2 class="header-title">${title}</h2>
+                        <h2 class="header-title">${repo.name}</h2>
                     </div>
                     <div class="header-buttons right">
                         <button class="nav-btn" id="new-item-button">
@@ -358,20 +333,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
 
         document.getElementById('repo-back-btn').addEventListener('click', () => viewManager.pop());
-        document.getElementById('new-item-button').addEventListener('click', () => showModal('options', {}, 'repo'));
+        document.getElementById('new-item-button').addEventListener('click', () => showModal('options', { repoId: repo.id }));
 
-        const repoContent = document.getElementById('repo-content');
-        const files = await window.db.getAllItems('files');
-        const repoItems = files.filter(file => file.repositoryId === repo.id && file.parentId === parentId);
-        const repoListHtml = repoItems.map(item => {
-            const itemType = item.type || 'file';
-            const fileType = itemType === 'folder' ? 'folder' : window.fileEngine.getFileType(item.name);
-            const fileIconClass = itemType === 'folder' ? 'repo-bg' : window.fileEngine.getFileIconClass(fileType);
-            const iconSvg = itemType === 'folder' ? '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>' : window.fileEngine.getIconSvg(fileType);
-            return `
-                <div class="file-item" data-id="${item.id}" data-type="${itemType}">
-                    <div class="file-icon-bg ${fileIconClass}">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">${iconSvg}</svg>
+        await renderRepoContent(repo.id, document.getElementById('repo-content'));
+    }
+
+    async function renderRepoContent(repoId, container, parentId = null, level = 0) {
+        const items = await window.db.getAllItems('files');
+        const repoItems = items.filter(item => item.repositoryId === repoId && item.parentId === parentId);
+        let html = '';
+        repoItems.forEach(item => {
+            const isFolder = item.type === 'folder';
+            const expanded = state.expandedFolders.has(item.id);
+            const iconClass = isFolder ? 'folder-bg' : window.fileEngine.getFileIconClass(window.fileEngine.getFileType(item.name));
+            const iconSvg = isFolder ? window.fileEngine.getIconSvg('folder') : window.fileEngine.getIconSvg(window.fileEngine.getFileType(item.name));
+            html += `
+                <div class="file-item ${isFolder ? 'folder-item' : ''}" data-id="${item.id}" data-type="${item.type}" style="padding-left: ${level * 1.5}rem;">
+                    <div class="file-icon-bg ${iconClass}">
+                        <svg>${iconSvg}</svg>
                     </div>
                     <div class="file-info">
                         <span class="file-name">${item.name}</span>
@@ -384,153 +363,177 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
             `;
-        }).join('');
-        repoContent.innerHTML = repoListHtml || '<div class="no-items">No items in this folder. Tap the "plus" button to create one.</div>';
-
-        repoContent.querySelectorAll('.file-item').forEach(item => {
-            item.addEventListener('click', async (e) => {
-                if (e.target.closest('.dropdown-trigger')) return; // Prevent triggering on dropdown click
-                const id = parseInt(item.dataset.id);
-                const fileItem = await window.db.getItemById('files', id);
-                if (fileItem.type === 'folder') {
-                    viewManager.push('repo-tree', { repo, parentId: id });
-                } else {
-                    viewManager.push('editor', { file: fileItem });
-                }
-            });
+            if (isFolder && expanded) {
+                html += `<div class="sub-items" data-parent-id="${item.id}"></div>`;
+            }
         });
-        attachDropdownListeners(repoContent);
+        container.innerHTML = html || '<div class="no-items">No items in this repository. Create one to get started!</div>';
+
+        container.querySelectorAll('.file-item').forEach(item => {
+            const id = parseInt(item.dataset.id);
+            const type = item.dataset.type;
+            if (type === 'file') {
+                item.addEventListener('click', async (e) => {
+                    if (e.target.closest('.dropdown-trigger')) return;
+                    const file = await window.db.getItemById('files', id);
+                    if (file) {
+                        viewManager.push('editor', { file });
+                    }
+                });
+            } else if (type === 'folder') {
+                item.addEventListener('click', async (e) => {
+                    if (e.target.closest('.dropdown-trigger')) return;
+                    const expanded = state.expandedFolders.has(id);
+                    if (expanded) {
+                        state.expandedFolders.delete(id);
+                    } else {
+                        state.expandedFolders.add(id);
+                    }
+                    await renderRepoContent(repoId, container, null, 0); // Re-render whole tree
+                });
+            }
+            item.querySelector('.dropdown-trigger').addEventListener('click', (e) => showItemMenu(e, id, type));
+        });
+
+        // Render sub-items for expanded folders
+        repoItems.forEach(async (item) => {
+            if (item.type === 'folder' && state.expandedFolders.has(item.id)) {
+                const subContainer = container.querySelector(`[data-parent-id="${item.id}"]`);
+                if (subContainer) {
+                    await renderRepoContent(repoId, subContainer, item.id, level + 1);
+                }
+            }
+        });
     }
 
-    function attachDropdownListeners(container, itemType = 'file') {
-        container.querySelectorAll('.dropdown-trigger').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const existingMenu = document.querySelector('.dropdown-menu');
-                if (existingMenu) {
-                    existingMenu.remove();
-                    return;
-                }
+    async function showItemMenu(e, id, type) {
+        const existingMenu = document.querySelector('.dropdown-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+            return;
+        }
 
-                const itemElem = btn.closest('.file-item');
-                const id = parseInt(itemElem.dataset.id);
-                const type = itemElem.dataset.type;
-                const store = type === 'repo' ? 'repositories' : 'files';
-                const item = await window.db.getItemById(store, id);
+        const menu = document.createElement('div');
+        menu.className = 'dropdown-menu';
+        let html = '';
+        if (type === 'file') {
+            html = `
+                <button data-action="download">Download</button>
+                <button data-action="delete">Delete</button>
+                <button data-action="rename">Rename</button>
+                <button data-action="move">Move to Folder</button>
+            `;
+        } else if (type === 'folder') {
+            html = `
+                <button data-action="rename">Rename</button>
+                <button data-action="delete">Delete</button>
+            `;
+        } else if (type === 'repo') {
+            html = `
+                <button data-action="delete">Delete</button>
+                <button data-action="rename">Rename</button>
+            `;
+        }
+        menu.innerHTML = html;
+        menu.style.top = `${e.currentTarget.getBoundingClientRect().top + window.scrollY + 20}px`;
+        menu.style.left = `${e.currentTarget.getBoundingClientRect().left + window.scrollX - 150}px`; // Position to left for visibility
+        document.body.appendChild(menu);
 
-                const menu = document.createElement('div');
-                menu.className = 'dropdown-menu';
-                let html = '';
-                if (type === 'file') {
-                    html += `<button data-action="download">Download</button>`;
-                    html += `<button data-action="rename">Rename</button>`;
-                    html += `<button data-action="move">Move to Folder</button>`;
-                    html += `<button data-action="delete">Delete</button>`;
-                } else if (type === 'folder') {
-                    html += `<button data-action="rename">Rename</button>`;
-                    html += `<button data-action="delete">Delete</button>`;
-                } else if (type === 'repo') {
-                    html += `<button data-action="rename">Rename</button>`;
-                    html += `<button data-action="delete">Delete</button>`;
-                }
-                menu.innerHTML = html;
-                const rect = btn.getBoundingClientRect();
-                menu.style.top = `${rect.bottom + window.scrollY}px`;
-                menu.style.left = `${rect.left + window.scrollX - menu.offsetWidth + btn.offsetWidth}px`;
-                document.body.appendChild(menu);
-
-                menu.querySelectorAll('button').forEach(b => {
-                    b.addEventListener('click', async (ev) => {
-                        const action = ev.currentTarget.dataset.action;
-                        if (action === 'download') {
-                            window.fileEngine.downloadFile(item.name, item.content);
-                        } else if (action === 'delete') {
-                            if (type === 'folder') {
-                                const children = await window.db.getItemsByIndex('files', 'parentId', id);
-                                if (children.length > 0) {
-                                    alert('Cannot delete non-empty folder');
-                                    menu.remove();
-                                    return;
+        menu.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', async (event) => {
+                const action = event.currentTarget.dataset.action;
+                try {
+                    switch (action) {
+                        case 'download':
+                            const file = await window.db.getItemById('files', id);
+                            if (file) {
+                                window.fileEngine.downloadFile(file.name, file.content);
+                            }
+                            break;
+                        case 'delete':
+                            if (confirm(`Are you sure you want to delete this ${type}?`)) {
+                                if (type === 'folder') {
+                                    const children = await window.db.getAllItems('files');
+                                    const hasChildren = children.some(child => child.parentId === id);
+                                    if (hasChildren) {
+                                        alert('Folder is not empty. Delete contents first.');
+                                        return;
+                                    }
                                 }
-                            } else if (type === 'repo') {
-                                const repoFiles = await window.db.getItemsByIndex('files', 'repositoryId', id);
-                                if (repoFiles.length > 0) {
-                                    alert('Cannot delete non-empty repository');
-                                    menu.remove();
-                                    return;
+                                await window.db.deleteItem(type === 'repo' ? 'repositories' : 'files', id);
+                                if (state.currentPage === 'repo-tree') {
+                                    const repo = await window.db.getItemById('repositories', state.currentRepoId);
+                                    viewManager.push('repo-tree', { repo });
+                                } else {
+                                    renderMainContent();
                                 }
                             }
-                            if (confirm('Are you sure you want to delete this?')) {
-                                await window.db.deleteItem(store, id);
-                                refreshCurrentView();
+                            break;
+                        case 'rename':
+                            const item = await window.db.getItemById(type === 'repo' ? 'repositories' : 'files', id);
+                            if (item) {
+                                showModal('input', { type: 'rename', itemId: id, store: type === 'repo' ? 'repositories' : 'files', currentName: item.name });
                             }
-                        } else if (action === 'rename') {
-                            state.currentItemId = id;
-                            showModal('input', { type: 'rename', itemType: type });
-                            filenameInput.value = item.name;
-                            filenameInput.disabled = false;
-                            filenameInput.focus();
-                        } else if (action === 'move') {
-                            const subMenu = document.createElement('div');
-                            subMenu.className = 'dropdown-menu';
-                            const allFiles = await window.db.getAllItems('files');
-                            const folders = allFiles.filter(f => f.type === 'folder' && f.repositoryId === state.currentRepoId && f.id !== id);
-                            subMenu.innerHTML = folders.map(f => `<button data-folder-id="${f.id}">${f.name}</button>`).join('');
-                            if (folders.length === 0) {
-                                subMenu.innerHTML = '<div class="no-items">No folders available</div>';
-                            }
-                            const mRect = menu.getBoundingClientRect();
-                            subMenu.style.top = `${mRect.top}px`;
-                            subMenu.style.left = `${mRect.right + 5}px`;
-                            document.body.appendChild(subMenu);
-
-                            subMenu.querySelectorAll('button').forEach(fb => {
-                                fb.addEventListener('click', async () => {
-                                    const folderId = parseInt(fb.dataset.folderId);
+                            break;
+                        case 'move':
+                            const folders = await window.db.getAllItems('files');
+                            const repoFolders = folders.filter(f => f.repositoryId === state.currentRepoId && f.type === 'folder' && f.id !== id);
+                            const moveMenu = document.createElement('div');
+                            moveMenu.className = 'dropdown-menu sub-menu';
+                            moveMenu.innerHTML = repoFolders.map(folder => `<button data-folder-id="${folder.id}">${folder.name}</button>`).join('');
+                            moveMenu.style.top = `${event.currentTarget.getBoundingClientRect().top + window.scrollY + 20}px`;
+                            moveMenu.style.left = `${event.currentTarget.getBoundingClientRect().left + window.scrollX}px`;
+                            document.body.appendChild(moveMenu);
+                            moveMenu.querySelectorAll('button').forEach(subBtn => {
+                                subBtn.addEventListener('click', async (subEvent) => {
+                                    const folderId = parseInt(subEvent.currentTarget.dataset.folderId);
                                     await window.db.updateItem('files', id, { parentId: folderId });
-                                    refreshCurrentView();
-                                    subMenu.remove();
-                                    menu.remove();
+                                    const repo = await window.db.getItemById('repositories', state.currentRepoId);
+                                    viewManager.push('repo-tree', { repo });
+                                    moveMenu.remove();
                                 });
                             });
-
-                            document.addEventListener('click', (ce) => {
-                                if (!subMenu.contains(ce.target)) {
-                                    subMenu.remove();
+                            document.addEventListener('click', (closeEvent) => {
+                                if (!moveMenu.contains(closeEvent.target)) {
+                                    moveMenu.remove();
                                 }
                             }, { once: true });
-                        }
-                        if (action !== 'move') {
-                            menu.remove();
-                        }
-                    });
-                });
-
-                document.addEventListener('click', (ce) => {
-                    if (!menu.contains(ce.target) && !btn.contains(ce.target)) {
-                        menu.remove();
+                            break;
                     }
-                }, { once: true });
+                } catch (e) {
+                    alert('An error occurred.');
+                    console.error(e);
+                }
+                menu.remove();
             });
         });
+
+        document.addEventListener('click', (closeEvent) => {
+            if (!menu.contains(closeEvent.target) && !e.currentTarget.contains(closeEvent.target)) {
+                menu.remove();
+            }
+        }, { once: true });
     }
 
     async function renderCodeEditorPage(data) {
         // (unchanged from previous version)
-        // ... 
+        // ... [omitted for brevity, but include the full function as before]
     }
 
-    function showModal(type, options = {}, context = 'home') {
+    function showModal(type, options = {}) {
         modal.classList.remove('hidden');
         setTimeout(() => {
             modal.classList.add('show');
             if (type === 'options') {
                 optionsContainer.classList.remove('hidden');
                 inputSection.classList.add('hidden');
-                if (context === 'repo') {
-                    newRepoBtn.querySelector('span').textContent = 'New Folder';
+                // Conditional options based on page
+                if (state.currentPage === 'repo-tree') {
+                    newRepoBtn.style.display = 'none';
+                    newFolderBtn.style.display = 'block';
                 } else {
-                    newRepoBtn.querySelector('span').textContent = 'New Repository';
+                    newRepoBtn.style.display = 'block';
+                    newFolderBtn.style.display = 'none';
                 }
             } else if (type === 'input') {
                 optionsContainer.classList.add('hidden');
@@ -545,8 +548,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                     filenameTitle.textContent = 'New Repository';
                     filenameInput.placeholder = 'e.g., my-pwa-project';
                 } else if (options.type === 'rename') {
-                    filenameTitle.textContent = 'Rename ' + options.itemType.charAt(0).toUpperCase() + options.itemType.slice(1);
+                    filenameTitle.textContent = 'Rename';
                     filenameInput.placeholder = 'Enter new name';
+                    filenameInput.value = options.currentName;
+                    confirmBtn.addEventListener('click', async () => {
+                        const newName = filenameInput.value.trim();
+                        if (newName === '') return;
+                        await window.db.updateItem(options.store, options.itemId, { name: newName });
+                        hideModal();
+                        if (state.currentPage === 'repo-tree') {
+                            const repo = await window.db.getItemById('repositories', state.currentRepoId);
+                            viewManager.push('repo-tree', { repo });
+                        } else {
+                            renderMainContent();
+                        }
+                    }, { once: true });
+                }
+                if (options.repoId) {
+                    state.currentRepoId = options.repoId;
+                }
+                if (options.parentId) {
+                    state.currentParentId = options.parentId;
+                } else {
+                    state.currentParentId = null;
                 }
             }
         }, 10);
