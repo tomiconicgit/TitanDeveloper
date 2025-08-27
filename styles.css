@@ -1,29 +1,430 @@
-/* Styles for the new Gemini UI elements */
-.gemini-interface {
+:root {
+    --bg-main: #121212;
+    --bg-container: #1E1E1E;
+    --text-primary: #F0F0F0;
+    --text-secondary: #B0B0B0;
+    --accent: #007AFF;
+    --border-color: #333333;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none;
+}
+
+#app-container {
+    padding: 1rem;
+    height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding-bottom: 7rem; /* Space for the command bar */
+}
+
+/* Home Screen */
+.logo {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.titan {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    margin: 0;
+}
+
+.developer {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.2rem;
+    text-transform: uppercase;
+    font-weight: 300;
+}
+
+.recent-projects-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.recent-projects-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.recent-projects-header a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.recent-projects-grid {
+    display: grid;
     gap: 1rem;
-    padding: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.project-card {
     background-color: var(--bg-container);
-    border-top: 1px solid var(--border-color);
-    position: sticky; /* Make the input bar stick to the bottom */
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: transform 0.2s ease;
+}
+
+.project-card:active {
+    transform: scale(0.95);
+}
+
+.project-icon {
+    width: 48px;
+    height: 48px;
+    background-color: var(--bg-main);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.project-icon svg {
+    width: 24px;
+    height: 24px;
+    color: var(--accent);
+}
+
+.project-title {
+    font-weight: 500;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.project-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.command-bar {
+    position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    z-index: 999;
+    background-color: var(--bg-main);
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.command-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    padding: 0.5rem 0;
+    transition: color 0.2s ease;
+}
+
+.command-btn:hover, .command-btn:active {
+    color: var(--accent);
+}
+
+.command-btn svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 0.2rem;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s 0.3s;
+    z-index: 2000;
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease;
+}
+
+.modal-content {
+    background-color: var(--bg-container);
+    width: 100%;
+    max-width: 600px;
+    border-radius: 20px 20px 0 0;
+    padding: 1.5rem;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: translateY(0);
+}
+
+#options-container, #input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.divider {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 0.5rem 0;
+}
+
+#options-container button,
+#input-section input,
+#input-section .button-group button {
+    padding: 1rem;
+    font-size: 1rem;
+    border-radius: 10px;
+    border: none;
+}
+
+#options-container button {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    text-align: left;
+    transition: background-color 0.2s ease;
+}
+
+#options-container button:active {
+    background-color: var(--border-color);
+}
+
+#input-section input {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    outline: none;
+}
+
+#input-section input:focus {
+    border-color: var(--accent);
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+}
+
+.button-group button {
+    flex: 1;
+    cursor: pointer;
+}
+
+#confirm-btn {
+    background-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+#confirm-btn.enabled {
+    background-color: var(--accent);
+    color: var(--bg-container);
+    transition: background-color 0.2s ease;
+}
+
+#confirm-btn.enabled:active {
+    background-color: #5A99D6;
+}
+
+#cancel-btn {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+#cancel-btn:active {
+    background-color: var(--border-color);
+}
+
+/* File Explorer */
+.file-explorer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-main);
+    z-index: 100;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.header-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.nav-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.file-list {
+    padding: 1rem;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--bg-container);
+    border-radius: 12px;
+}
+
+.file-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    margin-right: 1rem;
+}
+
+.file-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.file-icon.html { background-color: #E34F26; color: #fff; }
+.file-icon.css { background-color: #1572B6; color: #fff; }
+.file-icon.js { background-color: #F7DF1E; color: #000; }
+
+.file-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.file-name {
+    font-weight: 500;
+}
+
+.file-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* AI Interface */
+.gemini-interface-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+}
+
+.chat-history {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.chat-message {
+    max-width: 80%;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    line-height: 1.4;
+}
+
+.user-message {
+    background-color: var(--accent);
+    color: var(--bg-container);
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+.gemini-message {
+    background-color: var(--bg-container);
+    color: var(--text-primary);
+    align-self: flex-start;
+    border: 1px solid var(--border-color);
+    border-bottom-left-radius: 4px;
+}
+
+.input-area {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: var(--bg-main);
+    border-top: 1px solid var(--border-color);
 }
 
 #gemini-prompt-input {
-    width: 100%;
-    min-height: 80px;
+    flex-grow: 1;
+    min-height: 48px;
+    max-height: 120px;
     padding: 0.75rem;
     font-family: inherit;
     font-size: 1rem;
     color: var(--text-primary);
-    background-color: var(--bg-main);
+    background-color: var(--bg-container);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    resize: none; /* Prevents manual resizing of the text area */
+    resize: none;
     outline: none;
     transition: border-color 0.2s ease;
 }
@@ -37,27 +438,25 @@
 }
 
 #gemini-send-btn {
-    width: 100%;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--bg-container);
+    padding: 0.75rem;
+    border-radius: 8px;
     background-color: var(--accent);
     border: none;
-    border-radius: 8px;
+    color: var(--bg-container);
     cursor: pointer;
     transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 
-#gemini-send-btn:hover:not(:disabled) {
-    background-color: #5A99D6;
+#gemini-send-btn svg {
+    width: 24px;
+    height: 24px;
 }
 
-#gemini-send-btn:active:not(:disabled) {
-    background-color: #3A79B6;
+.loading-spinner {
+    animation: spin 1s linear infinite;
 }
 
-#gemini-send-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
