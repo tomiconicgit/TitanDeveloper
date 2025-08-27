@@ -116,11 +116,8 @@
             highlightedCode = highlightedCode.replace(regex, `<span class="token-${token}">$&</span>`);
         }
 
-        // Escape HTML tags to prevent XSS and ensure the pre block renders correctly
         highlightedCode = highlightedCode.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        // Re-insert the spans
         for (const [token, regex] of Object.entries(rules)) {
-            const originalToken = `$1`; // Correctly reference the captured group
             highlightedCode = highlightedCode.replace(new RegExp(`&lt;span class="token-${token}"&gt;(.*?)&lt;/span&gt;`, 'g'), `<span class="token-${token}">$1</span>`);
         }
 
