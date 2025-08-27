@@ -2,11 +2,7 @@
 File: /app.js
 */
 
-// This file orchestrates the entire application, handling UI rendering,
-// user interactions, and page navigation.
-
 document.addEventListener('DOMContentLoaded', async () => {
-    // Wait for the database to be ready before initializing the app.
     try {
         await window.db.ready;
     } catch (e) {
@@ -15,7 +11,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // --- Core UI & State Management ---
     const appContainer = document.getElementById('app-container');
     const modal = document.getElementById('modal');
     const optionsContainer = document.getElementById('options-container');
@@ -28,23 +23,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const newRepoBtn = document.getElementById('new-repo-btn');
     const newFolderBtn = document.getElementById('new-folder-btn');
 
-    const chatModal = document.getElementById('chat-modal');
-    const chatInput = document.getElementById('chat-input');
-    const chatSendBtn = document.getElementById('chat-send-btn');
-    const chatCloseBtn = document.getElementById('chat-close-btn');
-    const chatContent = document.getElementById('chat-content');
-
-    // State object to manage app-wide variables
     const state = {
         currentPage: 'home',
         currentView: 'files',
         currentRepoId: null,
         expandedFolders: new Set(),
         currentParentId: null,
-        chatMessages: [], // For chat bot
     };
 
-    // View Manager for handling page transitions and state
     const viewManager = {
         history: [{ page: 'home', data: {} }],
         push(pageName, data = {}) {
@@ -66,41 +52,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
     };
 
-    // --- Event Listeners & Router ---
-    document.getElementById('back-button')?.addEventListener('click', () => {
-        viewManager.pop();
-    });
-
-    document.getElementById('new-item-button')?.addEventListener('click', () => {
-        showModal('options');
-    });
-
-    newFileBtn.addEventListener('click', () => {
-        showModal('input', { type: 'file' });
-        filenameInput.disabled = false;
-        filenameInput.focus();
-    });
-
-    newRepoBtn.addEventListener('click', () => {
-        showModal('input', { type: 'repo' });
-        filenameInput.disabled = false;
-        filenameInput.focus();
-    });
-
-    newFolderBtn.addEventListener('click', () => {
-        showModal('input', { type: 'folder' });
-        filenameInput.disabled = false;
-        filenameInput.focus();
-    });
-
-    cancelBtn.addEventListener('click', () => {
-        hideModal();
-    });
-
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal || e.target.id === 'cancel-btn') {
-            hideModal();
+    function showModal(type, data = {}) {
+        modal.classList.remove('hidden');
+        optionsContainer.classList.add('hidden');
+        inputSection.classList.add('hidden');
+        if (type === 'options') {
+            optionsContainer.classList.remove('hidden');
+        } else if (type === 'input') {
+            inputSection.classList.remove('hidden');
+            filenameTitle.textContent = `New ${data.type.charAt(0).toUpperCase() + data.type.slice(1)}`;
+            filenameInput.value = '';
+            filenameInput.focus();
         }
+    }
+
+    function hideModal() {
+        modal.classList.add('hidden');
+        optionsContainer.classList.add('hidden');
+        inputSection.classList.add('hidden');
+        filenameInput.value = '';
+        confirmBtn.classList.remove('enabled');
+        confirmBtn.disabled = true;
+    }
+
+    newFileBtn.addEventListener('click', () => showModal('input', { type: 'file' }));
+    newRepoBtn.addEventListener('click', () => showModal('input', { type: 'repo' }));
+    newFolderBtn.addEventListener('click', () => showModal('input', { type: 'folder' }));
+    cancelBtn.addEventListener('click', hideModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) hideModal();
     });
 
     filenameInput.addEventListener('input', () => {
@@ -128,13 +108,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const newItemId = await window.db.addItem(store, newItem);
-            console.log(`${type} created:`, newItem);
             hideModal();
             if (type === 'file') {
                 const createdFile = await window.db.getItemById('files', newItemId);
                 viewManager.push('editor', { file: createdFile });
-            } else if (type === 'folder') {
-                renderMainContent();
             } else {
                 renderMainContent();
             }
@@ -145,17 +122,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Handle incoming errors from the error.js module
-    document.addEventListener('app-error', (e) => {
-        // You can now display this error within your app's UI
-        console.warn('App-level error received:', e.detail);
-        // Implement a polished toast or alert system here if desired
+    document.getElementById('back-button')?.addEventListener('click', () => viewManager.pop());
+
+    document.getElementById('new-item-button')?.addEventListener('click', () => {
+        showModal('options');
     });
 
-    // Initialize the app
-    viewManager.push('home');
-
-    // --- UI Rendering Functions ---
     async function renderPage(pageName, data = {}) {
         state.currentPage = pageName;
         appContainer.innerHTML = '';
@@ -172,7 +144,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 renderRepoTreePage(data);
                 break;
             default:
-                // Handle 404
                 appContainer.innerHTML = '<div class="error-state"><h1>Page Not Found</h1><p>The page you requested does not exist.</p></div>';
                 break;
         }
@@ -183,10 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const navPillFiles = document.getElementById('nav-pill-files');
         const navPillRepos = document.getElementById('nav-pill-repos');
 
-        if (!navPill || !navPillFiles || !navPillRepos) {
-            console.warn("Nav pill elements not found. Skipping update.");
-            return;
-        }
+        if (!navPill || !navPillFiles || !navPillRepos) return;
 
         if (state.currentView === 'files') {
             navPill.style.transform = 'translateX(0)';
@@ -200,10 +168,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function renderHomePage() {
-        // Since we are re-rendering the entire appContainer, we need to
-        // make sure we remove and re-attach listeners for the new elements.
-        // The previous attempt to get the elements at the top of the file failed.
-        
         document.querySelector('.app-header')?.classList.add('hidden');
         document.querySelector('.home-header')?.classList.remove('hidden');
 
@@ -213,16 +177,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="nav-pill-container">
                         <div id="nav-pill" class="nav-pill"></div>
                         <button id="nav-pill-files" class="nav-pill-button active">Files</button>
-                        <button id="nav-pill-repos" class="nav-pill-button">Repository</button>
+                        <button id="nav-pill-repos" class="nav-pill-button">Repositories</button>
                     </div>
                     <button id="new-item-button" class="nav-btn">
-                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
                     </button>
                 </div>
                 <div id="main-content" class="scrollable-content"></div>
             </div>
         `;
-        // ATTACH LISTENERS HERE AFTER THE ELEMENTS ARE CREATED
+
         document.getElementById('nav-pill-files').addEventListener('click', () => {
             state.currentView = 'files';
             updateNavPill();
@@ -265,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 `;
             }).join('');
-            mainContent.innerHTML = fileListHtml || '<div class="no-items">No files found. Tap the "plus" button to create one.</div>';
+            mainContent.innerHTML = fileListHtml || '<div class="no-items">No files found. Tap the "+" button to create one.</div>';
             mainContent.querySelectorAll('.file-item').forEach(item => {
                 item.addEventListener('click', async (e) => {
                     const id = parseInt(item.dataset.id);
@@ -287,7 +251,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <span class="file-date">Last modified: ${new Date(repo.timestamp).toLocaleString()}</span>
                     </div>
                     <div class="file-actions">
-                         <button class="nav-btn dropdown-trigger">
+                        <button class="nav-btn dropdown-trigger">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/></svg>
                         </button>
                     </div>
@@ -306,12 +270,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    async function renderRepoTreePage(data) {
-        const repo = data.repo || { name: 'Unknown', id: null };
-        document.querySelector('.app-header')?.classList.remove('hidden');
-        document.querySelector('.home-header')?.classList.add('hidden');
+    async function renderCodeEditorPage(data) {
         const file = data.file || { name: 'untitled', content: '' };
-        
         const fileType = window.fileEngine.getFileType(file.name);
         const fileIconClass = window.fileEngine.getFileIconClass(fileType);
 
@@ -319,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="code-editor-page">
                 <header class="page-header editor-header">
                     <button id="editor-back-btn" class="nav-btn back-btn">
-                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
                     </button>
                     <div class="header-file-info">
                         <div class="file-icon-bg ${fileIconClass} mini-icon">
@@ -353,4 +313,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         const updateLineNumbers = () => {
             const lines = editor.value.split('\n');
             const lineCount = lines.length;
-            const numbers = Array.from({ length: lineCount }, (_, i) => `<div>${i + 1}</div>`).join('');
+            lineNumbers.innerHTML = Array.from({ length: lineCount }, (_, i) => `<div>${i + 1}</div>`).join('');
+            highlighter.innerHTML = window.fileEngine.highlightCode(codeContent, file.name);
+        };
+
+        editor.addEventListener('input', () => {
+            codeContent = editor.value;
+            updateLineNumbers();
+            window.db.updateItem('files', data.file.id, { content: codeContent });
+        });
+
+        editor.addEventListener('scroll', () => {
+            highlighter.scrollTop = editor.scrollTop;
+            lineNumbers.scrollTop = editor.scrollTop;
+        });
+
+        updateLineNumbers();
+    }
+
+    viewManager.push('home');
+});
