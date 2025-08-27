@@ -56,9 +56,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // --- Event Listeners & Router ---
-    // The event listeners for the nav pills have been moved to the renderHomePage function
-    // to ensure the elements exist when the listeners are attached.
-
     document.getElementById('back-button')?.addEventListener('click', () => {
         viewManager.pop();
     });
@@ -105,6 +102,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const store = filenameTitle.textContent === 'New File' ? 'files' : 'repositories';
         const newItem = { name, content: '' };
+        if (store === 'files' && options.repoId) {
+            newItem.repositoryId = options.repoId;
+        }
 
         try {
             const newItemId = await window.db.addItem(store, newItem);
@@ -125,9 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Handle incoming errors from the error.js module
     document.addEventListener('app-error', (e) => {
-        // You can now display this error within your app's UI
         console.warn('App-level error received:', e.detail);
-        // Implement a polished toast or alert system here if desired
     });
 
     // Initialize the app
@@ -146,8 +144,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             case 'editor':
                 renderCodeEditorPage(data);
                 break;
+            case 'repo-tree':
+                renderRepoTreePage(data);
+                break;
             default:
-                // Handle 404
                 appContainer.innerHTML = '<div class="error-state"><h1>Page Not Found</h1><p>The page you requested does not exist.</p></div>';
                 break;
         }
@@ -175,10 +175,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function renderHomePage() {
-        // Since we are re-rendering the entire appContainer, we need to
-        // make sure we remove and re-attach listeners for the new elements.
-        // The previous attempt to get the elements at the top of the file failed.
-        
         document.querySelector('.app-header')?.classList.add('hidden');
         document.querySelector('.home-header')?.classList.remove('hidden');
 
@@ -197,7 +193,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div id="main-content" class="scrollable-content"></div>
             </div>
         `;
-        // ATTACH LISTENERS HERE AFTER THE ELEMENTS ARE CREATED
         document.getElementById('nav-pill-files').addEventListener('click', () => {
             state.currentView = 'files';
             updateNavPill();
@@ -220,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (state.currentView === 'files') {
             const files = await window.db.getAllItems('files');
-            const fileListHtml = files.map(file => {
+            const fileListHtml = files.filter(file => !file.repositoryId).map(file => {
                 const fileType = window.fileEngine.getFileType(file.name);
                 const fileIconClass = window.fileEngine.getFileIconClass(fileType);
                 return `
@@ -255,28 +250,103 @@ document.addEventListener('DOMContentLoaded', async () => {
             const repoListHtml = repos.map(repo => `
                 <div class="file-item" data-id="${repo.id}" data-type="repo">
                     <div class="file-icon-bg repo-bg">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15.5l-5-5 1.41-1.41L11 15.68l6.59-6.59L19 10.5l-8 8z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                     </div>
                     <div class="file-info">
                         <span class="file-name">${repo.name}</span>
                         <span class="file-date">Last modified: ${new Date(repo.timestamp).toLocaleString()}</span>
                     </div>
                     <div class="file-actions">
-                         <button class="nav-btn dropdown-trigger">
+                        <button class="nav-btn dropdown-trigger">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/></svg>
                         </button>
                     </div>
                 </div>
             `).join('');
             mainContent.innerHTML = repoListHtml || '<div class="no-items">No repositories found. Create one to get started!</div>';
+            mainContent.querySelectorAll('.file-item[data-type="repo"]').forEach(item => {
+                item.addEventListener('click', async (e) => {
+                    const id = parseInt(item.dataset.id);
+                    const repo = await window.db.getItemById('repositories', id);
+                    if (repo) {
+                        viewManager.push('repo-tree', { repo });
+                    }
+                });
+            });
         }
+    }
+
+    async function renderRepoTreePage(data) {
+        const repo = data.repo || { name: 'Unknown', id: null };
+        document.querySelector('.app-header')?.classList.remove('hidden');
+        document.querySelector('.home-header')?.classList.add('hidden');
+
+        appContainer.innerHTML = `
+            <div class="repo-tree-page">
+                <header class="page-header">
+                    <button id="repo-back-btn" class="nav-btn back-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                    </button>
+                    <div class="header-file-info">
+                        <div class="file-icon-bg repo-bg">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                        </div>
+                        <h2 class="header-title">${repo.name}</h2>
+                    </div>
+                    <div class="header-buttons right">
+                        <button class="nav-btn" id="new-item-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        </button>
+                    </div>
+                </header>
+                <div id="repo-content" class="scrollable-content repo-tree"></div>
+            </div>
+        `;
+
+        document.getElementById('repo-back-btn').addEventListener('click', () => viewManager.pop());
+        document.getElementById('new-item-button').addEventListener('click', () => showModal('options', { repoId: repo.id }));
+
+        const repoContent = document.getElementById('repo-content');
+        const files = await window.db.getAllItems('files');
+        const repoFiles = files.filter(file => file.repositoryId === repo.id && !file.parentId);
+        const repoListHtml = repoFiles.map(file => {
+            const fileType = window.fileEngine.getFileType(file.name);
+            const fileIconClass = window.fileEngine.getFileIconClass(fileType);
+            return `
+                <div class="file-item" data-id="${file.id}" data-type="file">
+                    <div class="file-icon-bg ${fileIconClass}">
+                        <svg>${window.fileEngine.getIconSvg(fileType)}</svg>
+                    </div>
+                    <div class="file-info">
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-date">Last modified: ${new Date(file.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div class="file-actions">
+                        <button class="nav-btn dropdown-trigger">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        repoContent.innerHTML = repoListHtml || '<div class="no-items">No files in this repository. Create one to get started!</div>';
+
+        repoContent.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', async (e) => {
+                const id = parseInt(item.dataset.id);
+                const file = await window.db.getItemById('files', id);
+                if (file) {
+                    viewManager.push('editor', { file });
+                }
+            });
+        });
     }
 
     async function renderCodeEditorPage(data) {
         document.querySelector('.app-header')?.classList.remove('hidden');
         document.querySelector('.home-header')?.classList.add('hidden');
         const file = data.file || { name: 'untitled', content: '' };
-        
+
         const fileType = window.fileEngine.getFileType(file.name);
         const fileIconClass = window.fileEngine.getFileIconClass(fileType);
 
@@ -327,20 +397,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             highlighter.innerHTML = highlightedCode;
         };
 
+        const syncScroll = () => {
+            lineNumbers.scrollTop = editor.scrollTop;
+            highlighter.scrollTop = editor.scrollTop;
+            highlighter.scrollLeft = editor.scrollLeft;
+        };
+
         const updateEditor = () => {
             updateLineNumbers();
             updateSyntaxHighlighting();
-            highlighter.style.width = `${editor.scrollWidth}px`;
-            highlighter.style.height = `${editor.scrollHeight}px`;
+            syncScroll();
         };
 
         editor.addEventListener('input', updateEditor);
-        editor.addEventListener('scroll', () => {
-            lineNumbers.scrollTop = editor.scrollTop;
-            highlighter.scrollTop = editor.scrollTop;
-        });
+        editor.addEventListener('scroll', syncScroll);
 
-        // Basic bracket matching and auto-indent
+        // Enhanced bracket matching and auto-indent
         editor.addEventListener('keydown', (e) => {
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
@@ -362,24 +434,45 @@ document.addEventListener('DOMContentLoaded', async () => {
             const pairs = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'", '`': '`' };
             const key = e.key;
             if (pairs[key]) {
+                e.preventDefault();
                 const newText = text.substring(0, start) + key + pairs[key] + text.substring(end);
                 editor.value = newText;
                 editor.selectionStart = editor.selectionEnd = start + 1;
                 updateEditor();
+                return;
+            }
+
+            // Auto-indent on closing brace
+            if (key === '}' && text[start - 1] === '{') {
                 e.preventDefault();
+                const currentLine = text.substring(0, start).split('\n').pop();
+                const indent = currentLine.match(/^\s*/)[0];
+                const newText = text.substring(0, start) + '}' + '\n' + indent.slice(0, -2) + text.substring(end);
+                editor.value = newText;
+                editor.selectionStart = editor.selectionEnd = start + 1;
+                updateEditor();
+                return;
             }
         });
 
-        updateEditor();
+        // Resize handler for responsiveness
+        const resizeEditor = () => {
+            editor.style.width = `${window.innerWidth - 50}px`; /* Adjust for line numbers */
+            highlighter.style.width = `${window.innerWidth - 50}px`;
+            updateEditor();
+        };
 
-        // Save file on editor blur or every 5 seconds
+        window.addEventListener('resize', resizeEditor);
+        resizeEditor();
+
+        // Save file on editor blur or every 3 seconds
         let saveTimeout = null;
         editor.addEventListener('input', () => {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(async () => {
                 await window.db.updateItem('files', file.id, { content: editor.value });
                 console.log('Autosaved.');
-            }, 5000);
+            }, 3000);
         });
 
         const fileMenuBtn = document.getElementById('editor-file-menu');
