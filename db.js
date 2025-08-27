@@ -5,7 +5,7 @@ File: /db.js
 // A simple IndexedDB wrapper for persistent storage.
 
 const DB_NAME = 'TitanDeveloperDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3; // Incremented for new index
 const STORES = {
     files: 'files',
     repositories: 'repositories'
@@ -19,13 +19,21 @@ async function initDB() {
 
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
-            if (!db.objectStoreNames.contains(STORES.files)) {
-                const fileStore = db.createObjectStore(STORES.files, { keyPath: 'id', autoIncrement: true });
+            const oldVersion = event.oldVersion;
+            let fileStore;
+            if (oldVersion < 1 || !db.objectStoreNames.contains(STORES.files)) {
+                fileStore = db.createObjectStore(STORES.files, { keyPath: 'id', autoIncrement: true });
                 fileStore.createIndex('timestamp', 'timestamp', { unique: false });
                 fileStore.createIndex('repositoryId', 'repositoryId', { unique: false });
                 fileStore.createIndex('parentId', 'parentId', { unique: false });
+            } else {
+                const tx = event.target.transaction;
+                fileStore = tx.objectStore(STORES.files);
             }
-            if (!db.objectStoreNames.contains(STORES.repositories)) {
+            if (oldVersion < 3) {
+                fileStore.createIndex('type', 'type', { unique: false });
+            }
+            if (oldVersion < 1 || !db.objectStoreNames.contains(STORES.repositories)) {
                 const repoStore = db.createObjectStore(STORES.repositories, { keyPath: 'id', autoIncrement: true });
                 repoStore.createIndex('timestamp', 'timestamp', { unique: false });
             }
@@ -76,6 +84,18 @@ async function getAllItems(storeName) {
     });
 }
 
+async function getItemsByIndex(storeName, indexName, value) {
+    if (!dbInstance) await initDB();
+    const tx = dbInstance.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const index = store.index(indexName);
+    return new Promise((resolve, reject) => {
+        const request = index.getAll(IDBKeyRange.only(value));
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
 async function updateItem(storeName, id, updates) {
     if (!dbInstance) await initDB();
     const tx = dbInstance.transaction(storeName, 'readwrite');
@@ -92,11 +112,24 @@ async function updateItem(storeName, id, updates) {
     });
 }
 
+async function deleteItem(storeName, id) {
+    if (!dbInstance) await initDB();
+    const tx = dbInstance.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    return new Promise((resolve, reject) => {
+        const request = store.delete(id);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+}
+
 window.db = {
     addItem,
     getAllItems,
     getItemById,
+    getItemsByIndex,
     updateItem,
+    deleteItem,
 };
 
 window.db.ready = initDB();
