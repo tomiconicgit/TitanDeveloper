@@ -22,6 +22,7 @@ async function initDB() {
             if (!db.objectStoreNames.contains(STORES.files)) {
                 const fileStore = db.createObjectStore(STORES.files, { keyPath: 'id', autoIncrement: true });
                 fileStore.createIndex('timestamp', 'timestamp', { unique: false });
+                fileStore.createIndex('repositoryId', 'repositoryId', { unique: false }); // New index for repository
             }
             if (!db.objectStoreNames.contains(STORES.repositories)) {
                 db.createObjectStore(STORES.repositories, { keyPath: 'id', autoIncrement: true });
