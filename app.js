@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentParentId: null,
         history: [{ view: 'home', data: {} }],
         pushView(viewName, data = {}) {
-            // Prevent adding the same view twice in a row
             const lastView = this.history[this.history.length - 1];
             if (lastView && lastView.view === viewName && JSON.stringify(lastView.data) === JSON.stringify(data)) {
                 return;
@@ -50,7 +49,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // --- Modal and Dropdown Management ---
     function showModal(type, data = {}) {
         elements.modal.classList.remove('hidden');
         elements.inputSection.classList.add('hidden');
@@ -68,10 +66,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button class="dropdown-option" data-action="${opt.action}" role="menuitem">${opt.label}</button>
             `).join('');
             
-            // Position the dropdown more reliably
             const rect = data.event.target.getBoundingClientRect();
-            elements.dropdownMenu.style.top = `${rect.bottom + 5}px`;
-            elements.dropdownMenu.style.right = `${window.innerWidth - rect.right}px`;
+            const containerRect = elements.mainContainer.getBoundingClientRect();
+            
+            elements.dropdownMenu.style.top = `${rect.bottom - containerRect.top + 5}px`;
+            elements.dropdownMenu.style.right = `${containerRect.right - rect.right}px`;
             
             elements.dropdownMenu.querySelectorAll('.dropdown-option').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -91,7 +90,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.confirmBtn.disabled = true;
     }
 
-    // --- Event Listeners ---
     elements.filenameInput.addEventListener('input', () => {
         elements.confirmBtn.disabled = elements.filenameInput.value.trim().length === 0;
     });
@@ -123,10 +121,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     elements.cancelBtn.addEventListener('click', hideModal);
     elements.modal.addEventListener('click', (e) => {
-        if (e.target === elements.modal) hideModal();
+        if (e.target === elements.modal || e.target.closest('.modal-content') === null) {
+            hideModal();
+        }
     });
 
-    // --- View Rendering Logic ---
     async function renderView(viewName, data = {}) {
         state.currentView = viewName;
         state.currentRepoId = data.repoId;
@@ -164,6 +163,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (viewName === 'repo-tree') {
                 renderRepoTree(data.repoId);
             }
+        }
+    }
+
+    async function renderContent() {
+      // Re-render the current view to reflect changes
+      const lastView = state.history[state.history.length - 1];
+      if (lastView) {
+        renderView(lastView.view, lastView.data);
+      }
+    }
+
+    async function handleItemAction(action, id, type) {
+        try {
+            if (action === 'rename') {
+                showModal('input', { type, id });
+            } else if (action === 'delete') {
+                await window.db.deleteItem(type === 'file' ? 'files' : 'repositories', id);
+                renderContent();
+            } else if (action === 'download') {
+                const file = await window.db.getItemById('files', id);
+                if (file) window.fileEngine.downloadFile(file.name, file.content);
+            } else if (action === 'download-zip') {
+                alert('ZIP download not implemented yet.');
+            }
+        } catch (e) {
+            window.logCustomError(`Failed to perform ${action} action`, e);
+            alert(`An error occurred while trying to ${action} this item.`);
         }
     }
 
@@ -239,30 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     }
-    
-    // Consolidated action handler for items
-    async function handleItemAction(action, id, type) {
-        try {
-            if (action === 'rename') {
-                showModal('input', { type, id });
-            } else if (action === 'delete') {
-                await window.db.deleteItem(type === 'file' ? 'files' : 'repositories', id);
-                renderContent(); // Re-render the current view
-            } else if (action === 'download') {
-                const file = await window.db.getItemById('files', id);
-                if (file) window.fileEngine.downloadFile(file.name, file.content);
-            } else if (action === 'download-zip') {
-                alert('ZIP download not implemented yet.');
-            }
-        } catch (e) {
-            window.logCustomError(`Failed to perform ${action} action`, e);
-            alert(`An error occurred while trying to ${action} this item.`);
-        }
-    }
 
-
-    // The `renderEditor` and `renderRepoTree` functions are largely fine but can be cleaned up
-    // to match the pattern of `renderList`.
     async function renderEditor(fileId) {
         const file = await window.db.getItemById('files', fileId) || { name: 'untitled', content: '' };
         state.currentFileId = fileId;
@@ -296,7 +299,6 @@ document.addEventListener('DOMContentLoaded', async () => {
              }});
         });
 
-        // Editor logic remains largely the same, but now within the function scope.
         const editor = document.getElementById('code-editor');
         const lineNumbers = document.querySelector('.line-numbers');
         const highlighter = document.querySelector('.syntax-highlighting-layer');
@@ -353,7 +355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 options: [{ label: 'New File', action: 'new-file' }, { label: 'New Folder', action: 'new-folder' }],
                 event: e,
                 callback: (action) => {
-                    showModal('input', { type: 'file', repoId }); // Folders are not implemented in the DB, so we'll just create a file
+                    showModal('input', { type: 'file', repoId });
                 }
             });
         });
@@ -387,7 +389,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="item-divider"></div>
             `;
         }).join('') || '<div class="no-items">No items found. Tap the "+" button to add one.</div>';
-
         contentList.querySelectorAll('.item').forEach(item => {
             item.addEventListener('click', (e) => {
                 if (e.target.closest('.dropdown-trigger')) {
