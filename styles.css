@@ -75,6 +75,7 @@ body {
     align-items: center;
     position: relative;
     transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    background-color: var(--bg-main); /* Ensure app-container has a background to hide logo */
 }
 
 .logo {
@@ -102,6 +103,7 @@ body {
     position: relative;
     overflow: hidden;
     height: auto; /* Allow height to adapt */
+    z-index: 2; /* Ensure container is above the logo */
 }
 
 .container.expanded {
@@ -109,9 +111,11 @@ body {
     max-width: 410px;
     height: calc(100% - 4rem);
     background: var(--bg-container-expanded);
-    margin-top: 2rem; /* Adjusted top margin for a better look */
-    top: env(safe-area-inset-top);
-    bottom: env(safe-area-inset-bottom);
+    margin: 1rem; /* Adjust margin for overall positioning */
+    top: 0; /* Align to the top of its parent #app-container */
+    bottom: 0; /* Align to the bottom of its parent #app-container */
+    position: absolute; /* Needed for top/bottom to work relative to parent */
+    transform: translateY(0); /* Reset any previous transforms */
 }
 
 .nav-container {
@@ -285,7 +289,7 @@ body {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 4px 8px var(--shadow-dark);
-    margin: 0; /* Remove any default margin */
+    margin: 0;
 }
 
 .line-numbers {
@@ -320,7 +324,7 @@ body {
     bottom: 0;
     left: 48px;
     caret-color: var(--accent);
-    width: calc(100% - 48px); /* Fix horizontal size */
+    width: calc(100% - 48px);
 }
 
 .syntax-highlighting-layer {
@@ -337,7 +341,7 @@ body {
     font-size: inherit;
     line-height: inherit;
     overflow-y: auto;
-    width: calc(100% - 48px); /* Fix horizontal size */
+    width: calc(100% - 48px);
 }
 
 .token-tags { color: var(--syntax-tag); }
