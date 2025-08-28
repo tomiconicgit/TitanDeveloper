@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentFileId: null,
         currentParentId: null,
         history: [{ view: 'home', data: {} }],
-        modalData: null, // Explicitly initialize modalData to null
+        modalData: null,
         pushView(viewName, data = {}) {
             const lastView = this.history[this.history.length - 1];
             if (lastView && lastView.view === viewName && JSON.stringify(lastView.data) === JSON.stringify(data)) {
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     function showModal(type, data = {}) {
-        console.log('showModal called with type:', type, 'data:', data); // Debug log
+        console.log('showModal called with type:', type, 'data:', data);
         elements.modal.classList.remove('hidden');
         elements.inputSection.classList.add('hidden');
         elements.dropdownMenu.classList.add('hidden');
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.dropdownMenu.classList.add('hidden');
         elements.inputField.value = '';
         elements.confirmBtn.disabled = true;
-        state.modalData = null; // Clear modal data
+        state.modalData = null;
     }
 
     elements.inputField.addEventListener('input', () => {
@@ -145,18 +145,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
             elements.navContainer.classList.remove('hidden');
             elements.contentContainer.classList.add('hidden');
+            elements.mainContainer.classList.remove('expanded');
+            elements.mainContainer.classList.add('contracted');
             document.getElementById('nav-files').addEventListener('click', () => {
+                elements.mainContainer.classList.remove('contracted');
                 elements.mainContainer.classList.add('expanded');
                 elements.contentContainer.classList.remove('hidden');
                 state.pushView('files');
             });
             document.getElementById('nav-repos').addEventListener('click', () => {
+                elements.mainContainer.classList.remove('contracted');
                 elements.mainContainer.classList.add('expanded');
                 elements.contentContainer.classList.remove('hidden');
                 state.pushView('repos');
             });
         } else {
             elements.navContainer.classList.add('hidden');
+            elements.mainContainer.classList.remove('contracted');
             elements.mainContainer.classList.add('expanded');
             elements.contentContainer.classList.remove('hidden');
             if (viewName === 'files' || viewName === 'repos') {
@@ -407,16 +412,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // New initialization function
     function initializeApp() {
-        // Force hide modal immediately with highest priority
-        elements.modal.style.display = 'none'; // Immediate hide
+        elements.modal.style.display = 'none';
         elements.modal.classList.add('hidden');
-        hideModal(); // Ensure modal is hidden and state cleared
+        hideModal();
         renderView('home');
-        elements.modal.setAttribute('data-initialized', 'true'); // Mark as initialized
     }
 
-    // Call the new function to start the app
     initializeApp();
 });
