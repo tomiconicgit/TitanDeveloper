@@ -1,101 +1,92 @@
+/*
+File: /styles.css
+*/
+
 /* Reset and base layout */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 html, body {
-    height: 100%;
-    background-color: #111524; /* Deep, dark blue background */
-    font-family: 'Segoe UI', sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #f0f0f0;
+  height: 100%;
+  background-color: #111524; /* Deep midnight blue */
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Main container */
+/* Logo text */
+#logo {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+#logo h1 {
+  font-size: 3rem;
+  font-weight: 900;       /* Black weight */
+  color: #f5f5f5;         /* Off-white text */
+  letter-spacing: 2px;
+}
+
+#logo h2 {
+  font-size: 1.5rem;
+  font-weight: 900;       /* Black weight */
+  color: #f5f5f5;         /* Off-white text */
+  margin-top: 8px;
+}
+
+/* Button container */
 #main-container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px; /* Adjusted for better spacing between text and buttons */
-    align-items: center;
-    width: 100%;
-    max-width: 400px; /* Constrains the width of the container */
+  display: flex;
+  gap: 0;
+  margin-top: 20px;
 }
 
-/* Logo Text */
-#titan-logo {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #f0f0f0; /* Off-white color */
-    letter-spacing: 2px;
-    text-align: center;
-    text-transform: uppercase;
+/* Shared button styles */
+button {
+  background-color: #f5f5f5; /* Solid off-white */
+  color: #000;              /* Black text */
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 16px 32px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-#developer-text {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #f0f0f0; /* Off-white color */
-    text-align: center;
-    letter-spacing: 2px;
-    margin-top: 5px; /* Spacing between TITAN and DEVELOPER */
-    text-transform: uppercase;
+/* Left button (File Explorer) */
+#file-btn {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
-/* Button container for side-by-side layout */
-.button-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 24px; /* Space between text and buttons */
+/* Right button (Repo Explorer) */
+#repo-btn {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
-/* Buttons */
-.main-btn {
-    background-color: #f0f0f0; /* Solid off-white background */
-    color: #000000; /* Black text */
-    border: none;
-    padding: 16px 32px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-    text-transform: uppercase;
+button:hover {
+  transform: scale(1.03);
 }
 
-#file-explorer-btn {
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-#repo-explorer-btn {
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-.main-btn:hover {
-    transform: scale(1.05);
-}
-
-.main-btn:active {
-    transform: scale(0.98);
-}
-
-/* Full Screen Pages - No changes from previous version */
+/* Full Screen Pages */
 .full-screen-page {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #1A1A1A;
+    background-color: #1A1A1A; /* Dark background for the explorer pages */
     transform: translateX(100%);
     transition: transform 0.5s ease-in-out;
     display: flex;
@@ -112,8 +103,8 @@ html, body {
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background: #111111;
-    border-bottom: 1px solid #333333;
+    background: #111111; /* Header background color */
+    border-bottom: 1px solid #333333; /* Border for separation */
 }
 
 .header-title {
