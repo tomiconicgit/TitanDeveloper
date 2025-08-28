@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentFileId: null,
         currentParentId: null,
         history: [{ view: 'home', data: {} }],
+        modalData: null, // Explicitly initialize modalData to null
         pushView(viewName, data = {}) {
             const lastView = this.history[this.history.length - 1];
             if (lastView && lastView.view === viewName && JSON.stringify(lastView.data) === JSON.stringify(data)) {
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     function showModal(type, data = {}) {
+        console.log('showModal called with type:', type, 'data:', data); // Debug log
         elements.modal.classList.remove('hidden');
         elements.inputSection.classList.add('hidden');
         elements.dropdownMenu.classList.add('hidden');
@@ -82,6 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.dropdownMenu.classList.add('hidden');
         elements.inputField.value = '';
         elements.confirmBtn.disabled = true;
+        state.modalData = null; // Clear modal data
     }
 
     elements.inputField.addEventListener('input', () => {
@@ -406,9 +409,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // New initialization function
     function initializeApp() {
-        // Force hide modal immediately
+        // Force hide modal immediately with highest priority
+        elements.modal.style.display = 'none'; // Immediate hide
         elements.modal.classList.add('hidden');
-        hideModal(); // Ensure modal is hidden
+        hideModal(); // Ensure modal is hidden and state cleared
         renderView('home');
         elements.modal.setAttribute('data-initialized', 'true'); // Mark as initialized
     }
