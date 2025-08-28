@@ -3,6 +3,11 @@ File: /app.js
 */
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // --- FORCE HIDE MODAL AT APP START ---
+    // This is the most crucial change to fix the issue.
+    // It guarantees the modal is hidden before any other logic runs.
+    document.getElementById('modal').classList.add('hidden');
+
     try {
         await window.db.ready;
     } catch (e) {
@@ -67,13 +72,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.dropdownMenu.innerHTML = data.options.map(opt => `
                 <button class="dropdown-option" data-action="${opt.action}" role="menuitem">${opt.label}</button>
             `).join('');
-            
+
             const rect = data.event.target.getBoundingClientRect();
             const containerRect = elements.mainContainer.getBoundingClientRect();
-            
+
             elements.dropdownMenu.style.top = `${rect.bottom - containerRect.top + 5}px`;
             elements.dropdownMenu.style.right = `${containerRect.right - rect.right}px`;
-            
+
             elements.dropdownMenu.querySelectorAll('.dropdown-option').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     data.callback(btn.dataset.action);
@@ -84,6 +89,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // --- REVISED `hideModal` FUNCTION ---
+    // More robustly hides the modal by ensuring both classes are removed.
     function hideModal() {
         elements.modal.classList.add('hidden');
         elements.inputSection.classList.add('hidden');
@@ -135,7 +142,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     async function renderView(viewName, data = {}) {
-        hideModal(); // Add this line to ensure the modal is always hidden on view change
+        // We've moved the `hideModal()` call to the top of the file,
+        // so it's not strictly needed here anymore, but it doesn't hurt.
         state.currentView = viewName;
         state.currentRepoId = data.repoId;
         state.currentFileId = data.fileId;
@@ -176,10 +184,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function renderContent() {
-      const lastView = state.history[state.history.length - 1];
-      if (lastView) {
-        renderView(lastView.view, lastView.data);
-      }
+        const lastView = state.history[state.history.length - 1];
+        if (lastView) {
+            renderView(lastView.view, lastView.data);
+        }
     }
 
     async function handleItemAction(action, id, type) {
@@ -333,7 +341,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         updateEditor();
     }
-    
+
     async function renderRepoTree(repoId) {
         const repo = await window.db.getItemById('repositories', repoId) || { name: 'Unknown' };
         state.currentRepoId = repoId;
