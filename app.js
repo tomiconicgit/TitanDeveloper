@@ -3,19 +3,6 @@ File: /app.js
 */
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // --- FORCE HIDE MODAL AT APP START ---
-    // This is the most crucial change to fix the issue.
-    // It guarantees the modal is hidden before any other logic runs.
-    document.getElementById('modal').classList.add('hidden');
-
-    try {
-        await window.db.ready;
-    } catch (e) {
-        console.error("Failed to initialize database:", e);
-        document.getElementById('app-container').innerHTML = '<div class="error-display"><h1>Failed to Load App</h1><p>Please check your connection and try again.</p></div>';
-        return;
-    }
-
     const elements = {
         mainContainer: document.getElementById('main-container'),
         navContainer: document.getElementById('nav-container'),
@@ -89,8 +76,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- REVISED `hideModal` FUNCTION ---
-    // More robustly hides the modal by ensuring both classes are removed.
     function hideModal() {
         elements.modal.classList.add('hidden');
         elements.inputSection.classList.add('hidden');
@@ -142,8 +127,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     async function renderView(viewName, data = {}) {
-        // We've moved the `hideModal()` call to the top of the file,
-        // so it's not strictly needed here anymore, but it doesn't hurt.
         state.currentView = viewName;
         state.currentRepoId = data.repoId;
         state.currentFileId = data.fileId;
@@ -421,5 +404,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    renderView('home');
+    // New initialization function
+    function initializeApp() {
+        hideModal(); // This ensures the modal is hidden
+        renderView('home');
+    }
+
+    // Call the new function to start the app
+    initializeApp();
 });
