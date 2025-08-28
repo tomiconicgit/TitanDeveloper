@@ -135,6 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     async function renderView(viewName, data = {}) {
+        hideModal(); // Add this line to ensure the modal is always hidden on view change
         state.currentView = viewName;
         state.currentRepoId = data.repoId;
         state.currentFileId = data.fileId;
