@@ -1,82 +1,79 @@
-/*
-File: /styles.css
-*/
-
 /* Reset and base layout */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 html, body {
-  height: 100%;
-  background-color: #111524; /* Deep midnight blue */
-  font-family: 'Segoe UI', sans-serif;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+    height: 100%;
+    background-color: #111524; /* Deep midnight blue */
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Logo text */
 #logo {
-  text-align: center;
-  margin-bottom: 40px;
+    text-align: center;
+    margin-bottom: 40px;
 }
 
 #logo h1 {
-  font-size: 3rem;
-  font-weight: 900;       /* Black weight */
-  color: #f5f5f5;         /* Off-white text */
-  letter-spacing: 2px;
+    font-size: 3rem;
+    font-weight: 900;       /* Black weight */
+    color: #f5f5f5;         /* Off-white text */
+    letter-spacing: 2px;
 }
 
 #logo h2 {
-  font-size: 1.5rem;
-  font-weight: 900;       /* Black weight */
-  color: #f5f5f5;         /* Off-white text */
-  margin-top: 8px;
+    font-size: 1.5rem;
+    font-weight: 900;       /* Black weight */
+    color: #f5f5f5;         /* Off-white text */
+    margin-top: 8px;
 }
 
 /* Button container */
 #main-container {
-  display: flex;
-  gap: 0;
-  margin-top: 20px;
+    display: flex;
+    gap: 0;
+    margin-top: 20px;
 }
 
 /* Shared button styles */
 button {
-  background-color: #f5f5f5; /* Solid off-white */
-  color: #000;              /* Black text */
-  text-transform: uppercase;
-  font-weight: bold;
-  font-size: 1rem;
-  padding: 16px 32px;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+    background-color: #434759; /* Solid dark blue-gray */
+    color: #f5f5f5;              /* Off-white text */
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 16px 32px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Drop shadow effect */
 }
 
 /* Left button (File Explorer) */
 #file-btn {
-  border-top-left-radius: 12px;
-  border-bottom-left-radius: 12px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 /* Right button (Repo Explorer) */
 #repo-btn {
-  border-top-right-radius: 12px;
-  border-bottom-right-radius: 12px;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 button:hover {
-  transform: scale(1.03);
+    transform: scale(1.03);
 }
 
 /* Full Screen Pages */
