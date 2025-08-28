@@ -1,14 +1,14 @@
 :root {
-    --bg-main: #000000; /* Solid black background */
-    --bg-container: #111111; /* Slightly lighter container */
-    --bg-container-expanded: #1A1A1A; /* Expanded container */
-    --bg-header: rgba(20, 20, 20, 0.95); /* Header in expanded state */
-    --text-primary: #E0E6E6; /* Light gray text */
-    --text-secondary: #A1B0B3; /* Muted gray */
-    --accent: #007AFF; /* iOS blue */
-    --accent-dark: #005BB5; /* Darker blue for hover */
+    --bg-main: #000000;
+    --bg-container: #111111;
+    --bg-container-expanded: #1A1A1A;
+    --bg-header: rgba(20, 20, 20, 0.95);
+    --text-primary: #E0E6E6;
+    --text-secondary: #A1B0B3;
+    --accent: #007AFF;
+    --accent-dark: #005BB5;
     --accent-gradient: linear-gradient(45deg, #007AFF, #00C4FF);
-    --border-color: #333333; /* Subtle dividers */
+    --border-color: #333333;
     --shadow-light: rgba(0, 0, 0, 0.3);
     --shadow-dark: rgba(0, 0, 0, 0.5);
     --line-number: #6B7C80;
@@ -63,7 +63,7 @@ body {
 }
 
 #app-container {
-    max-width: 430px; /* iPhone 15 Pro Max width */
+    max-width: 430px;
     height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     display: flex;
     flex-direction: column;
@@ -90,6 +90,8 @@ body {
     padding: 1rem;
     box-shadow: 0 4px 8px var(--shadow-dark);
     transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    position: relative;
+    overflow: hidden;
 }
 
 .container.expanded {
@@ -334,27 +336,27 @@ body {
 .token-constants { color: var(--syntax-constant); }
 
 .modal {
-    position: fixed;
+    position: absolute; /* Positioned relative to the parent .container */
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
     display: flex;
-    align-items: flex-end;
+    justify-content: center;
+    align-items: center; /* Center the modal content within the container */
     transition: opacity 0.3s ease;
     z-index: 1000;
 }
 
 .modal-content {
     background: #222222;
-    border-radius: 12px 12px 0 0;
+    border-radius: 12px; /* Changed from 12px 12px 0 0 to fully rounded */
     padding: 1.5rem;
-    box-shadow: 0 -4px 8px var(--shadow-dark);
+    box-shadow: 0 4px 8px var(--shadow-dark); /* Changed from -4px */
     backdrop-filter: blur(12px);
-    width: 100%;
-    max-width: 430px;
-    margin: 0 auto;
+    width: 90%; /* Adjusted width to be more fluid within the container */
+    max-width: 380px;
 }
 
 #input-section {
