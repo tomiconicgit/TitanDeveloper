@@ -406,8 +406,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // New initialization function
     function initializeApp() {
-        hideModal(); // This ensures the modal is hidden
+        // Force hide modal immediately
+        elements.modal.classList.add('hidden');
+        hideModal(); // Ensure modal is hidden
         renderView('home');
+        elements.modal.setAttribute('data-initialized', 'true'); // Mark as initialized
     }
 
     // Call the new function to start the app
