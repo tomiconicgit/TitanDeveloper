@@ -351,6 +351,10 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
+.modal[data-initialized="false"] {
+    display: none !important;
+}
+
 .modal-content {
     background: #222222;
     border-radius: 12px 12px 0 0;
