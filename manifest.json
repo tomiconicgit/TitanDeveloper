@@ -1,13 +1,18 @@
 {
     "name": "Titan Developer",
     "short_name": "Titan Dev",
-    "description": "A sovereign, offline-first coding IDE PWA.",
-    "start_url": "/index.html?nocache=true",
+    "description": "A mobile code editor for developers",
+    "start_url": "/index.html",
     "display": "standalone",
-    "background_color": "#0C0C0C",
-    "theme_color": "#0C0C0C",
+    "background_color": "#000000",
+    "theme_color": "#007AFF",
     "icons": [
-        { "src": "icon.png", "sizes": "192x192", "type": "image/png" },
-        { "src": "icon.png", "sizes": "512x512", "type": "image/png" }
-    ]
+        {
+            "src": "/icon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "orientation": "portrait",
+    "scope": "/"
 }
