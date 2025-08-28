@@ -2,7 +2,7 @@
 File: /sw.js
 */
 
-const CACHE_NAME = 'titan-dev-cache-v2'; // Updated cache name
+const CACHE_NAME = 'titan-dev-cache-v3';
 const urlsToCache = ['/', '/index.html', '/styles.css', '/app.js', '/code-engine.js', '/db.js', '/error.js', '/manifest.json', '/icon.png'];
 
 self.addEventListener('install', (event) => {
