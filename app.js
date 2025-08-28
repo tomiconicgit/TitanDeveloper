@@ -17,15 +17,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         contentContainer: document.getElementById('content-container'),
         modal: document.getElementById('modal'),
         inputSection: document.getElementById('input-section'),
-        filenameInput: document.getElementById('filename'),
-        filenameTitle: document.getElementById('filename-title'),
+        inputField: document.getElementById('input-field'),
+        inputTitle: document.getElementById('input-title'),
         confirmBtn: document.getElementById('confirm-btn'),
         cancelBtn: document.getElementById('cancel-btn'),
         dropdownMenu: document.getElementById('dropdown-menu'),
     };
 
     const state = {
-        currentView: 'home', // home, files, repos, editor, repo-tree
+        currentView: 'home',
         currentRepoId: null,
         currentFileId: null,
         currentParentId: null,
@@ -56,10 +56,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (type === 'input') {
             elements.inputSection.classList.remove('hidden');
-            elements.filenameTitle.textContent = 'Enter Name';
-            elements.filenameInput.value = '';
-            elements.filenameInput.focus();
+            elements.inputTitle.textContent = data.title || 'Enter Name';
+            elements.inputField.value = '';
+            elements.inputField.focus();
             state.modalData = data;
+            elements.confirmBtn.classList.remove('enabled');
+            elements.confirmBtn.disabled = true;
         } else if (type === 'dropdown') {
             elements.dropdownMenu.classList.remove('hidden');
             elements.dropdownMenu.innerHTML = data.options.map(opt => `
@@ -86,16 +88,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.modal.classList.add('hidden');
         elements.inputSection.classList.add('hidden');
         elements.dropdownMenu.classList.add('hidden');
-        elements.filenameInput.value = '';
+        elements.inputField.value = '';
         elements.confirmBtn.disabled = true;
     }
 
-    elements.filenameInput.addEventListener('input', () => {
-        elements.confirmBtn.disabled = elements.filenameInput.value.trim().length === 0;
+    elements.inputField.addEventListener('input', () => {
+        const isInputFilled = elements.inputField.value.trim().length > 0;
+        elements.confirmBtn.disabled = !isInputFilled;
+        if (isInputFilled) {
+            elements.confirmBtn.classList.add('enabled');
+        } else {
+            elements.confirmBtn.classList.remove('enabled');
+        }
     });
 
     elements.confirmBtn.addEventListener('click', async () => {
-        const name = elements.filenameInput.value.trim();
+        const name = elements.inputField.value.trim();
         if (name === '') return;
 
         const { type, repoId, parentId, id } = state.modalData;
@@ -167,7 +175,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function renderContent() {
-      // Re-render the current view to reflect changes
       const lastView = state.history[state.history.length - 1];
       if (lastView) {
         renderView(lastView.view, lastView.data);
@@ -177,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function handleItemAction(action, id, type) {
         try {
             if (action === 'rename') {
-                showModal('input', { type, id });
+                showModal('input', { title: 'Rename', type, id });
             } else if (action === 'delete') {
                 await window.db.deleteItem(type === 'file' ? 'files' : 'repositories', id);
                 renderContent();
@@ -355,7 +362,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 options: [{ label: 'New File', action: 'new-file' }, { label: 'New Folder', action: 'new-folder' }],
                 event: e,
                 callback: (action) => {
-                    showModal('input', { type: 'file', repoId });
+                    showModal('input', { title: 'Enter New File Name', type: 'file', repoId });
                 }
             });
         });
@@ -405,5 +412,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    viewManager.push('home');
+    renderView('home');
 });
