@@ -14,10 +14,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=SF+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="error.js"></script>
-    <script src="db.js"></script>
-    <script src="code-engine.js"></script>
-    <script src="app.js" defer></script>
 </head>
 <body>
     <div id="app-container">
@@ -31,10 +27,10 @@
             <div id="modal" class="modal hidden">
                 <div class="modal-content">
                     <div id="input-section" class="hidden">
-                        <h3 id="filename-title">Enter Name</h3>
-                        <input type="text" id="filename" placeholder="Enter name" autofocus>
+                        <h3 id="input-title">Enter Name</h3>
+                        <input type="text" id="input-field" placeholder="Enter name" autofocus>
                         <div class="button-group">
-                            <button id="confirm-btn" disabled>Confirm</button>
+                            <button id="confirm-btn">Confirm</button>
                             <button id="cancel-btn">Cancel</button>
                         </div>
                     </div>
@@ -43,5 +39,10 @@
             </div>
         </div>
     </div>
+
+    <script src="error.js"></script>
+    <script src="db.js"></script>
+    <script src="code-engine.js"></script>
+    <script src="app.js" defer></script>
 </body>
 </html>
