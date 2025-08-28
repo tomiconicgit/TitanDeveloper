@@ -75,21 +75,23 @@ body {
     align-items: center;
     position: relative;
     transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
-    background-color: var(--bg-main); /* Ensure app-container has a background to hide logo */
+    background-color: var(--bg-main);
 }
 
 .logo {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 1rem;
+    position: absolute;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 2rem;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
     transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
-    position: absolute;
-    z-index: 1; /* Ensure logo is behind the expanded container */
+    z-index: 1;
 }
 
 .container {
@@ -99,11 +101,11 @@ body {
     max-width: 380px;
     padding: 1rem;
     box-shadow: 0 4px 8px var(--shadow-dark);
-    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: all 2s cubic-bezier(0.8, 0.1, 0.2, 0.9);
     position: relative;
     overflow: hidden;
-    height: auto; /* Allow height to adapt */
-    z-index: 2; /* Ensure container is above the logo */
+    height: auto;
+    z-index: 2;
 }
 
 .container.expanded {
@@ -111,41 +113,49 @@ body {
     max-width: 410px;
     height: calc(100% - 4rem);
     background: var(--bg-container-expanded);
-    margin: 1rem; /* Adjust margin for overall positioning */
-    top: 0; /* Align to the top of its parent #app-container */
-    bottom: 0; /* Align to the bottom of its parent #app-container */
-    position: absolute; /* Needed for top/bottom to work relative to parent */
-    transform: translateY(0); /* Reset any previous transforms */
+    margin: 1rem;
+    top: 0;
+    bottom: 0;
+    position: absolute;
+    transform: translateY(0);
 }
 
 .nav-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem;
+    background-color: #222222;
+    border-radius: 8px;
+    padding: 0.2rem;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+    margin-bottom: 1rem;
 }
 
 .nav-btn {
     flex: 1;
     background: none;
     border: none;
-    color: var(--text-primary);
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 0.8rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.6rem;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 6px;
+    text-align: center;
 }
 
-.nav-btn:active {
-    background: var(--accent-dark);
-    transform: scale(0.95);
+.nav-btn.active {
+    background: var(--bg-container-expanded);
+    color: var(--text-primary);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.nav-btn:hover {
+    background: #333333;
+    color: var(--text-primary);
 }
 
 .nav-divider {
-    width: 1px;
-    height: 2rem;
-    background: var(--border-color);
+    display: none;
 }
 
 .content-container {
