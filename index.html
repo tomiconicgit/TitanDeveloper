@@ -2,59 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
-    <title>Titan Developer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Titan Explorer</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=SF+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="app-container">
-        <div class="logo">
-            <span>TITAN</span>
-            <span>DEVELOPER</span>
-        </div>
-        <div id="main-container" class="container">
-            <div id="nav-container" class="nav-container"></div>
-            <div id="content-container" class="content-container hidden"></div>
-        </div>
 
-        <div id="modal" class="modal hidden" data-initialized="false" style="display: none;">
-            <div class="modal-content">
-                <div id="input-section" class="hidden">
-                    <h3 id="input-title">Enter Name</h3>
-                    <input type="text" id="input-field" placeholder="Enter name" autofocus>
-                    <div class="button-group">
-                        <button id="confirm-btn">Confirm</button>
-                        <button id="cancel-btn">Cancel</button>
-                    </div>
-                </div>
-                <div id="dropdown-menu" class="dropdown-menu hidden"></div>
-            </div>
-        </div>
+    <div id="main-container">
+        <button id="file-explorer-btn">File Explorer</button>
+        <button id="repo-explorer-btn">Repo Explorer</button>
     </div>
 
-    <script src="error.js"></script>
-    <script src="db.js"></script>
-    <script src="code-engine.js"></script>
-    <script src="app.js" defer></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(reg => {
-                    console.log('Service Worker registered! 😎', reg);
-                }).catch(err => {
-                    console.log('Service Worker registration failed: 😥', err);
-                });
-            });
-        }
-    </script>
+    <div id="file-explorer-page" class="full-screen-page">
+        <div class="header">
+            <button class="header-btn back-btn" onclick="hidePage('file-explorer-page')">Back</button>
+            <h1 class="header-title">File Explorer</h1>
+            <button class="header-btn">...</button>
+        </div>
+        <div class="scrollable-content">
+            </div>
+    </div>
+
+    <div id="repo-explorer-page" class="full-screen-page">
+        <div class="header">
+            <button class="header-btn back-btn" onclick="hidePage('repo-explorer-page')">Back</button>
+            <h1 class="header-title">Repo Explorer</h1>
+            <button class="header-btn">...</button>
+        </div>
+        <div class="scrollable-content">
+            </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
