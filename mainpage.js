@@ -366,6 +366,7 @@ function injectStyles(styles) {
     document.head.appendChild(styleTag);
 }
 
+
 // Mocking placeholders for code editor and repository manager logic
 const codeEditor = {
     openFile: function(fileName) {
@@ -403,19 +404,15 @@ const repoManager = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Inject the main page CSS styles immediately on page load
+    injectStyles(pageStyles);
+
     // Wait for the splash screen animation to finish
     setTimeout(() => {
-        // Inject the CSS after the splash screen is hidden
-        injectStyles(pageStyles);
-        
-        const splashScreen = document.getElementById('splash-screen');
         const mainContent = document.getElementById('main-content-area');
-
-        // Hide the splash screen and show the main content
-        splashScreen.classList.add('hidden');
         mainContent.classList.add('visible');
 
-        // DOM elements for the main page
+        // DOM elements
         const newFileModal = document.getElementById('new-file-modal');
         const modalTitle = newFileModal.querySelector('.modal-title');
         const fileNameInput = document.getElementById('file-name-input');
