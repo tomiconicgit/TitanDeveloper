@@ -404,164 +404,170 @@ const repoManager = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Inject the CSS first
-    injectStyles(pageStyles);
+    // Wait for the splash screen animation to finish
+    setTimeout(() => {
+        // Inject the CSS after the splash screen is hidden
+        injectStyles(pageStyles);
 
-    // DOM elements
-    const newFileModal = document.getElementById('new-file-modal');
-    const modalTitle = newFileModal.querySelector('.modal-title');
-    const fileNameInput = document.getElementById('file-name-input');
-    const confirmButton = document.getElementById('confirm-button');
-    const cancelButton = document.getElementById('cancel-button');
-    const fileUploadInput = document.getElementById('file-upload');
-    const wrapper = document.getElementById('action-button-wrapper');
+        const mainContent = document.getElementById('main-content-area');
+        mainContent.classList.add('visible');
 
-    let currentAction = null;
+        // DOM elements
+        const newFileModal = document.getElementById('new-file-modal');
+        const modalTitle = newFileModal.querySelector('.modal-title');
+        const fileNameInput = document.getElementById('file-name-input');
+        const confirmButton = document.getElementById('confirm-button');
+        const cancelButton = document.getElementById('cancel-button');
+        const fileUploadInput = document.getElementById('file-upload');
+        const wrapper = document.getElementById('action-button-wrapper');
 
-    // Function to create the transforming button with its menu
-    function createTransformingButton(options) {
-        const container = document.createElement('div');
-        container.className = 'transform-button-container';
+        let currentAction = null;
 
-        const buttonLabel = document.createElement('span');
-        buttonLabel.className = 'button-label';
-        buttonLabel.textContent = 'Tap to Open';
+        // Function to create the transforming button with its menu
+        function createTransformingButton(options) {
+            const container = document.createElement('div');
+            container.className = 'transform-button-container';
 
-        const menu = document.createElement('ul');
-        menu.className = 'transform-dropdown-menu';
+            const buttonLabel = document.createElement('span');
+            buttonLabel.className = 'button-label';
+            buttonLabel.textContent = 'Tap to Open';
 
-        options.forEach(optionText => {
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            a.href = '#';
-            a.textContent = optionText;
+            const menu = document.createElement('ul');
+            menu.className = 'transform-dropdown-menu';
 
-            if (optionText === 'New File') {
-                a.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    showModal('Create New File..', 'newFile', true);
+            options.forEach(optionText => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '#';
+                a.textContent = optionText;
+
+                if (optionText === 'New File') {
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showModal('Create New File..', 'newFile', true);
+                        container.classList.remove('active');
+                    });
+                } else if (optionText === 'Open File') {
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        fileUploadInput.setAttribute('accept', '.js,.css,.html');
+                        fileUploadInput.click();
+                        container.classList.remove('active');
+                    });
+                } else if (optionText === 'Open Zip') {
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        fileUploadInput.setAttribute('accept', '.zip');
+                        fileUploadInput.click();
+                        container.classList.remove('active');
+                    });
+                } else if (optionText === 'New Repository') {
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showModal('Create New Repository..', 'newRepo', false);
+                        container.classList.remove('active');
+                    });
+                } else {
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        alert(`Selected: ${optionText}`);
+                        container.classList.remove('active');
+                    });
+                }
+
+                li.appendChild(a);
+                menu.appendChild(li);
+            });
+
+            container.appendChild(buttonLabel);
+            container.appendChild(menu);
+
+            container.addEventListener('click', (e) => {
+                e.stopPropagation();
+                container.classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (container.classList.contains('active') && !container.contains(e.target)) {
                     container.classList.remove('active');
-                });
-            } else if (optionText === 'Open File') {
-                a.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    fileUploadInput.setAttribute('accept', '.js,.css,.html');
-                    fileUploadInput.click();
-                    container.classList.remove('active');
-                });
-            } else if (optionText === 'Open Zip') {
-                a.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    fileUploadInput.setAttribute('accept', '.zip');
-                    fileUploadInput.click();
-                    container.classList.remove('active');
-                });
-            } else if (optionText === 'New Repository') {
-                a.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    showModal('Create New Repository..', 'newRepo', false);
-                    container.classList.remove('active');
-                });
-            } else {
-                a.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    alert(`Selected: ${optionText}`);
-                    container.classList.remove('active');
-                });
+                }
+            });
+
+            return container;
+        }
+
+        // Function to display the modal dynamically
+        function showModal(title, action, requiresExtension) {
+            modalTitle.textContent = title;
+            currentAction = action;
+            
+            // Remove previous input listener to prevent multiple triggers
+            fileNameInput.removeEventListener('input', handleInputValidation);
+            
+            // Add new listener with dynamic logic
+            function handleInputValidation() {
+                const value = fileNameInput.value.trim();
+                if (requiresExtension) {
+                    confirmButton.disabled = !value.includes('.');
+                } else {
+                    confirmButton.disabled = value.length === 0;
+                }
             }
+            fileNameInput.addEventListener('input', handleInputValidation);
+            
+            newFileModal.classList.add('visible');
+            fileNameInput.value = '';
+            confirmButton.disabled = true;
+            fileNameInput.focus();
+        }
 
-            li.appendChild(a);
-            menu.appendChild(li);
-        });
+        // Function to hide the modal
+        function hideModal() {
+            newFileModal.classList.remove('visible');
+            fileNameInput.value = '';
+            confirmButton.disabled = true;
+            currentAction = null;
+        }
 
-        container.appendChild(buttonLabel);
-        container.appendChild(menu);
-
-        container.addEventListener('click', (e) => {
-            e.stopPropagation();
-            container.classList.toggle('active');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (container.classList.contains('active') && !container.contains(e.target)) {
-                container.classList.remove('active');
-            }
-        });
-
-        return container;
-    }
-
-    // Function to display the modal dynamically
-    function showModal(title, action, requiresExtension) {
-        modalTitle.textContent = title;
-        currentAction = action;
-        
-        // Remove previous input listener to prevent multiple triggers
-        fileNameInput.removeEventListener('input', handleInputValidation);
-        
-        // Add new listener with dynamic logic
-        function handleInputValidation() {
+        // Event listeners
+        confirmButton.addEventListener('click', () => {
             const value = fileNameInput.value.trim();
-            if (requiresExtension) {
-                confirmButton.disabled = !value.includes('.');
+            if (value.length > 0) {
+                hideModal();
+                if (currentAction === 'newFile') {
+                    codeEditor.openFile(value);
+                } else if (currentAction === 'newRepo') {
+                    repoManager.openRepo(value);
+                }
             } else {
-                confirmButton.disabled = value.length === 0;
+                alert('Please enter a valid name.');
             }
-        }
-        fileNameInput.addEventListener('input', handleInputValidation);
+        });
+
+        cancelButton.addEventListener('click', hideModal);
         
-        newFileModal.classList.add('visible');
-        fileNameInput.value = '';
-        confirmButton.disabled = true;
-        fileNameInput.focus();
-    }
-
-    // Function to hide the modal
-    function hideModal() {
-        newFileModal.classList.remove('visible');
-        fileNameInput.value = '';
-        confirmButton.disabled = true;
-        currentAction = null;
-    }
-
-    // Event listeners
-    confirmButton.addEventListener('click', () => {
-        const value = fileNameInput.value.trim();
-        if (value.length > 0) {
-            hideModal();
-            if (currentAction === 'newFile') {
-                codeEditor.openFile(value);
-            } else if (currentAction === 'newRepo') {
-                repoManager.openRepo(value);
+        fileUploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const isZip = file.name.toLowerCase().endsWith('.zip');
+                if (isZip) {
+                    repoManager.unpackAndOpenRepo(file.name);
+                } else {
+                    codeEditor.openFile(file.name);
+                }
+                e.target.value = '';
             }
-        } else {
-            alert('Please enter a valid name.');
-        }
-    });
+        });
 
-    cancelButton.addEventListener('click', hideModal);
-    
-    fileUploadInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const isZip = file.name.toLowerCase().endsWith('.zip');
-            if (isZip) {
-                repoManager.unpackAndOpenRepo(file.name);
-            } else {
-                codeEditor.openFile(file.name);
-            }
-            e.target.value = '';
-        }
-    });
-
-    // Initialize the transforming button
-    const options = ['New File', 'Open File', 'Open Zip', 'New Repository'];
-    const myTransformingButton = createTransformingButton(options);
-    
-    wrapper.appendChild(myTransformingButton);
+        // Initialize the transforming button
+        const options = ['New File', 'Open File', 'Open Zip', 'New Repository'];
+        const myTransformingButton = createTransformingButton(options);
+        
+        wrapper.appendChild(myTransformingButton);
+    }, 3000); // 3-second delay to match the splash screen animation duration
 });
