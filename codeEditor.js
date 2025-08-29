@@ -37,9 +37,6 @@ export default function renderCodeEditor(targetElementId) {
                 </div>
             </div>
         </div>
-        <div id="main-page" class="main-page">
-            Main Page Loaded!
-        </div>
         <div id="modal-overlay" class="modal-overlay">
             <div id="modal-box" class="modal-box">
                 <h3>Download File!</h3>
@@ -364,7 +361,8 @@ export default function renderCodeEditor(targetElementId) {
     // Now that the elements exist, get references and set up event listeners
     const editorCloseBtn = document.querySelector('.editor-close-btn');
     const appContainer = document.querySelector('.app-container');
-    const mainPage = document.getElementById('main-page');
+    const mainPage = document.getElementById('main-content-area');
+    const editorContainer = document.getElementById('code-editor-container');
     const codeTextarea = document.getElementById('code-textarea');
     const currentFileName = document.getElementById('current-file-name');
     const numberBar = document.querySelector('.number-bar');
@@ -537,8 +535,14 @@ export default function renderCodeEditor(targetElementId) {
         setTimeout(() => {
             modalOverlay.style.display = 'none';
             modalBox.classList.remove('bounce-out');
-            appContainer.classList.add('slide-out');
-            mainPage.classList.add('slide-in');
+            
+            // Revert the slide effect
+            const mainContentArea = document.getElementById('main-content-area');
+            const editorContainer = document.getElementById('code-editor-container');
+            
+            mainContentArea.classList.remove('slide-out');
+            editorContainer.classList.remove('slide-in');
+
         }, 400);
     };
 
