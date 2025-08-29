@@ -685,6 +685,27 @@ document.addEventListener('DOMContentLoaded', () => {
         injectStyles(editorCssContent);
         document.getElementById(targetElementId).innerHTML = editorHtmlContent;
     }
+    
+    // Object to keep track of loaded plugins
+    const loadedPlugins = {};
+    
+    // Function to load plugins dynamically
+    const loadPluginForFile = async (fileName) => {
+        const ext = fileName.slice(fileName.lastIndexOf('.') + 1);
+        if (loadedPlugins[ext]) {
+            console.log(`Plugin for .${ext} already loaded.`);
+            return;
+        }
+        try {
+            const modulePath = `./plugins/${ext}.js`;
+            const module = await import(modulePath);
+            const { plugin } = module;
+            console.log(`Plugin for .${ext} loaded successfully!`);
+            loadedPlugins[ext] = plugin;
+        } catch (e) {
+            console.error(`Failed to load plugin for file type .${ext}.`, e);
+        }
+    };
 
     function initEditorListeners(initialFileName) {
         // Now that the elements exist, get references
@@ -770,6 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveFileToDb();
                 }
                 updateLineNumbers();
+                loadPluginForFile(fileName);
                 console.log(`File loaded: ${fileName}`);
             };
             request.onerror = (e) => {
@@ -778,7 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 codeTextarea.value = '';
                 currentFileName.textContent = fileName;
                 updateLineNumbers();
-                saveFileToDb();
+                loadPluginForFile(fileName);
             };
         };
 
@@ -985,14 +1007,16 @@ document.addEventListener('DOMContentLoaded', () => {
         async function openEditor(fileName) {
             const mainContentArea = document.getElementById('main-content-area');
             const editorContainer = document.getElementById('code-editor-container');
-            mainContentArea.classList.add('slide-out');
             
+            // Render the editor's HTML/CSS immediately.
             renderCodeEditor('code-editor-container');
-            
-            setTimeout(() => {
-                editorContainer.classList.add('slide-in');
-                initDbAndListeners(fileName); // Initialize DB and then listeners for the file
-            }, 50);
+
+            // Start the sliding animation.
+            mainContentArea.classList.add('slide-out');
+            editorContainer.classList.add('slide-in');
+
+            // Initialize the database and editor listeners with the filename.
+            initDbAndListeners(fileName);
         }
 
         confirmButton.addEventListener('click', () => {
