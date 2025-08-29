@@ -366,30 +366,7 @@ function injectStyles(styles) {
     document.head.appendChild(styleTag);
 }
 
-
-// Mocking placeholders for code editor and repository manager logic
-const codeEditor = {
-    openFile: function(fileName) {
-        console.log(`Code editor opening file: ${fileName}`);
-        const extension = fileName.split('.').pop();
-        console.log(`Detected file type: ${extension}`);
-
-        switch (extension) {
-            case 'js':
-                console.log('Loading JavaScript plugins...');
-                break;
-            case 'html':
-                console.log('Loading HTML plugins...');
-                break;
-            case 'css':
-                console.log('Loading CSS plugins...');
-                break;
-            default:
-                console.log('No specific plugins for this file type.');
-        }
-    }
-};
-
+// Mocking placeholder for repository manager logic
 const repoManager = {
     openRepo: function(repoName) {
         console.log(`Opening new repository: ${repoName}`);
@@ -402,6 +379,38 @@ const repoManager = {
         this.openRepo(zipFileName.replace('.zip', ''));
     }
 };
+
+// Global function to handle opening the code editor
+async function openEditor(fileName) {
+    const mainContentArea = document.getElementById('main-content-area');
+    const editorContainer = document.getElementById('code-editor-container');
+    
+    // Add slide-out class to main page
+    mainContentArea.classList.add('slide-out');
+    
+    // Dynamically import the code editor module
+    try {
+        const { default: renderCodeEditor } = await import('./codeEditor.js');
+        // Render the editor into its container
+        renderCodeEditor('code-editor-container');
+        
+        // Add a small delay to allow the rendering to happen
+        setTimeout(() => {
+            editorContainer.classList.add('slide-in');
+            // This is where you'd call a function in the editor to load the file
+            // For now, it just sets the filename.
+            const currentFileNameEl = document.getElementById('current-file-name');
+            if (currentFileNameEl) {
+                currentFileNameEl.textContent = fileName;
+            }
+        }, 50);
+        
+    } catch (error) {
+        console.error("Failed to load or render code editor:", error);
+        alert("There was an error loading the code editor. Please try again.");
+        mainContentArea.classList.remove('slide-out');
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     // Inject the main page CSS styles immediately on page load
@@ -540,7 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (value.length > 0) {
                 hideModal();
                 if (currentAction === 'newFile') {
-                    codeEditor.openFile(value);
+                    openEditor(value);
                 } else if (currentAction === 'newRepo') {
                     repoManager.openRepo(value);
                 }
@@ -558,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isZip) {
                     repoManager.unpackAndOpenRepo(file.name);
                 } else {
-                    codeEditor.openFile(file.name);
+                    openEditor(file.name);
                 }
                 e.target.value = '';
             }
