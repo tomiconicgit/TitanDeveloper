@@ -64,12 +64,35 @@
             height: 100%;
             display: flex;
             flex-direction: column;
+            position: absolute; /* Added */
+            top: 0; /* Added */
+            left: 0; /* Added */
+            width: 100%; /* Added */
         }
-
+        
         #main-content-area.visible {
             opacity: 1;
             visibility: visible;
         }
+
+        .slide-out {
+            transform: translateX(-100%);
+            transition: transform 0.5s ease-in-out;
+        }
+
+        #code-editor-container {
+            position: absolute;
+            top: 0;
+            left: 100%;
+            width: 100%;
+            height: 100%;
+            transition: left 0.5s ease-in-out;
+        }
+
+        #code-editor-container.slide-in {
+            left: 0;
+        }
+
     </style>
 </head>
 <body>
@@ -114,6 +137,8 @@
         </div>
         <div class="fade-overlay"></div>
     </div>
+    
+    <div id="code-editor-container"></div>
 
     <div id="new-file-modal" class="modal-overlay">
         <div class="modal-content">
